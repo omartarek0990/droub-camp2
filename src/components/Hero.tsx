@@ -6,9 +6,10 @@ import { translations } from '../lib/translations';
 interface HeroProps {
   lang: Language;
   onOpenBooking: () => void;
+  siteInfo?: Record<string, string>;
 }
 
-export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking }) => {
+export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => {
   const t = translations[lang];
 
   const handleScrollToAccommodation = () => {
@@ -18,6 +19,22 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking }) => {
     }
   };
 
+  const dynamicTitle =
+    lang === 'ar'
+      ? siteInfo?.hero_title_ar || 'حيث يلتقي البحر الأحمر بجبال سيناء'
+      : siteInfo?.hero_title_en || 'Where the Red Sea Meets the Mountains';
+
+  const dynamicSubtitle =
+    lang === 'ar'
+      ? siteInfo?.hero_subheadline_ar || t.heroSubheadline
+      : siteInfo?.hero_subheadline_en || t.heroSubheadline;
+
+  const dynamicHeroImg =
+    siteInfo?.hero_image_url ||
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=75';
+
+  const locationText = siteInfo?.location_name || 'شاطئ رأس شيطان • نويبع • جنوب سيناء';
+
   return (
     <section
       id="home"
@@ -26,10 +43,15 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking }) => {
       {/* Background Image with Cinematic Deep Navy Overlay */}
       <div className="absolute inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=80"
+          src={dynamicHeroImg}
           alt="Ras Shitan Nuweiba South Sinai Beach"
           className="w-full h-full object-cover object-center scale-105 transition-transform duration-1000 ease-out"
           loading="eager"
+          decoding="async"
+          // @ts-ignore
+          fetchpriority="high"
+          width="1400"
+          height="900"
         />
         {/* Layered cinematic gradient in deep navy */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0A1628] via-[#0F223D]/80 to-black/55 backdrop-blur-[0.5px]"></div>
@@ -43,10 +65,16 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking }) => {
           id="hero-badge"
           className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#FAF8F5] text-xs sm:text-sm font-semibold font-['Cairo'] mb-5 shadow-sm"
         >
-          <img src="/logo-emblem.svg" alt="Emblem" className="w-5 h-5 object-contain rounded-full bg-white p-0.5" />
+          <img
+            src="/logo-emblem.svg"
+            alt="Emblem"
+            className="w-5 h-5 object-contain rounded-full bg-white p-0.5"
+            width="20"
+            height="20"
+          />
           <span className="flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-[#D94E28]" />
-            <span>شاطئ رأس شيطان • نويبع • جنوب سيناء</span>
+            <span>{locationText}</span>
           </span>
         </div>
 
@@ -60,7 +88,7 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking }) => {
               دروب كامب <span className="text-[#D94E28]">«DROUB»</span>
               <br />
               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] block mt-2">
-                حيث يلتقي البحر الأحمر بجبال سيناء
+                {dynamicTitle}
               </span>
             </>
           ) : (
@@ -68,7 +96,7 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking }) => {
               Droub Camp <span className="text-[#D94E28]">«Ras Shitan»</span>
               <br />
               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#F8FAFC] block mt-2">
-                Where the Red Sea Meets the Mountains
+                {dynamicTitle}
               </span>
             </>
           )}
@@ -79,7 +107,7 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking }) => {
           id="hero-subtitle"
           className="font-['Tajawal'] text-base sm:text-lg md:text-xl text-[#CBD5E1] max-w-2xl mx-auto font-normal leading-relaxed mb-8 sm:mb-10 drop-shadow"
         >
-          {t.heroSubheadline}
+          {dynamicSubtitle}
         </p>
 
         {/* Primary CTA Buttons (Optimized for Mobile Thumb Taps) */}

@@ -8,6 +8,7 @@ export interface RoomPricing {
   display_order?: number;
   description_ar?: string;
   description_en?: string;
+  total_units?: number; // Total physical rooms of this category in the camp (e.g. 6)
 }
 
 export interface PackageItem {

@@ -63,6 +63,8 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
   const [requestFilter, setRequestFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled'>('pending');
   const [confirmedReminderModal, setConfirmedReminderModal] = useState<BookingRequest | null>(null);
   const [copiedInstaPay, setCopiedInstaPay] = useState(false);
+  const [cancellationNoticeModal, setCancellationNoticeModal] = useState<BookingRequest | null>(null);
+  const [copiedCancellation, setCopiedCancellation] = useState(false);
 
   // Content Data states
   const [rooms, setRooms] = useState<RoomPricing[]>([]);
@@ -218,7 +220,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
   // Handle Booking Status Update (Confirm / Cancel)
   const handleUpdateBookingStatus = async (
     request: BookingRequest,
-    newStatus: 'confirmed' | 'cancelled'
+    newStatus: 'confirmed' | 'cancelled' | 'pending'
   ) => {
     if (!request.id) return;
 
@@ -233,13 +235,55 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
       if (newStatus === 'confirmed') {
         showFeedback('success', `تم تأكيد حجز ${request.guest_name} بنجاح وحظر التواريخ على التقويم`);
         setConfirmedReminderModal({ ...request, status: 'confirmed' });
+      } else if (newStatus === 'cancelled') {
+        showFeedback('success', `تم إلغاء الحجز لـ ${request.guest_name} وإعادة إتاحة الغرفة على الموقع`);
       } else {
-        showFeedback('success', `تم إلغاء / رفض طلب الحجز لـ ${request.guest_name}`);
+        showFeedback('success', `تمت إعادة الحجز لـ ${request.guest_name} إلى قيد الانتظار`);
       }
 
       fetchBookingRequests();
     } catch (err: any) {
       showFeedback('error', `فشل تحديث حالة الحجز: ${err.message}`);
+    }
+  };
+
+  // Specific Action: Cancel Unpaid Booking & Prompt WhatsApp Notice
+  const handleCancelUnpaidBooking = async (request: BookingRequest) => {
+    if (!request.id) return;
+    const confirmPrompt = window.confirm(
+      `هل تريد بالتأكيد إلغاء حجز ${request.guest_name} لعدم تحويل الفلوس؟\n\nسيتم فوراً:\n1. تغيير حالة الحجز إلى "ملغي"\n2. إعادة فتح الغرفة والتواريخ فوراً على التقويم لجميع الزوار\n3. فتح رسالة واتساب جاهزة لإشعار النزيل بالإلغاء`
+    );
+    if (!confirmPrompt) return;
+
+    try {
+      const { error } = await supabase
+        .from('booking_requests')
+        .update({ status: 'cancelled' })
+        .eq('id', request.id);
+
+      if (error) throw error;
+
+      showFeedback('success', `تم إلغاء حجز ${request.guest_name} بنجاح وإعادة فتح الغرفة على الموقع!`);
+      fetchBookingRequests();
+      // Open cancellation notice popup
+      setCancellationNoticeModal(request);
+    } catch (err: any) {
+      showFeedback('error', `فشل إلغاء الحجز: ${err.message}`);
+    }
+  };
+
+  // Delete Booking permanently
+  const handleDeleteBooking = async (request: BookingRequest) => {
+    if (!request.id) return;
+    if (!window.confirm(`هل أنت متأكد من حذف سجل حجز ${request.guest_name} نهائياً من قاعدة البيانات؟`)) return;
+
+    try {
+      const { error } = await supabase.from('booking_requests').delete().eq('id', request.id);
+      if (error) throw error;
+      showFeedback('success', 'تم حذف سجل الحجز نهائياً');
+      fetchBookingRequests();
+    } catch (err: any) {
+      showFeedback('error', `فشل حذف الحجز: ${err.message}`);
     }
   };
 
@@ -317,6 +361,15 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
 يرجى إرسال لقطة شاشة لإيصال التحويل فور السداد. نتطلع لاستضافتك في أحضان سيناء!`;
   };
 
+  // Build copy-ready cancellation message when guest does not pay deposit
+  const getCancellationCopyText = (booking: BookingRequest) => {
+    return `مرحباً أستاذ/ة ${booking.guest_name}،
+نحيطكم علماً بأنه نظراً لعدم استلام إشعار تحويل العربون (إنستاباي) لحجز ${booking.reference_name} للفترة من (${booking.check_in} إلى ${booking.check_out})، فقد تم إلغاء طلب الحجز وإعادة إتاحة الغرفة فوراً على الموقع لنزلاء آخرين.
+
+نتطلع لاستضافتكم في دروب كامب — رأس شيطان في أوقات قادمة!
+للتواصل والاستفسار: 01061189414`;
+  };
+
   // Filtered booking requests list
   const filteredRequests = bookingRequests.filter((r) => {
     if (requestFilter === 'all') return true;
@@ -358,6 +411,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
         triple_price: editingRoom.triple_price ? Number(editingRoom.triple_price) : null,
         quadruple_price: editingRoom.quadruple_price ? Number(editingRoom.quadruple_price) : null,
         display_order: editingRoom.display_order ? Number(editingRoom.display_order) : 1,
+        total_units: editingRoom.total_units ? Number(editingRoom.total_units) : 6,
       };
 
       if (editingRoom.id) {
@@ -978,9 +1032,9 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="pt-3 border-t border-[#F1F5F9] flex flex-wrap items-center gap-2">
+                      <div className="pt-3 border-t border-[#F1F5F9] flex flex-col gap-2">
                         {isPending && (
-                          <>
+                          <div className="flex flex-wrap items-center gap-2">
                             <button
                               onClick={() => handleUpdateBookingStatus(req, 'confirmed')}
                               className="flex-1 py-2.5 px-4 rounded-xl bg-[#15803D] hover:bg-[#166534] text-white font-['Cairo'] font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all"
@@ -989,22 +1043,52 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                               <span>تأكيد الحجز وحظر التواريخ</span>
                             </button>
                             <button
-                              onClick={() => handleUpdateBookingStatus(req, 'cancelled')}
-                              className="py-2.5 px-3.5 rounded-xl bg-[#FEE2E2] hover:bg-[#FECACA] text-[#991B1B] font-['Cairo'] font-bold text-xs transition-colors"
+                              onClick={() => handleCancelUnpaidBooking(req)}
+                              className="py-2.5 px-3.5 rounded-xl bg-[#FEE2E2] hover:bg-[#FECACA] text-[#991B1B] font-['Cairo'] font-bold text-xs transition-colors flex items-center gap-1"
                             >
-                              إلغاء / رفض
+                              <X className="w-3.5 h-3.5" />
+                              <span>إلغاء لعدم السداد</span>
                             </button>
-                          </>
+                          </div>
                         )}
 
                         {isConfirmed && (
-                          <button
-                            onClick={() => setConfirmedReminderModal(req)}
-                            className="flex-1 py-2 px-4 rounded-xl bg-[#FFF7ED] border border-[#FFEDD5] hover:bg-[#FFEDD5] text-[#C2411C] font-['Cairo'] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
-                          >
-                            <CreditCard className="w-4 h-4 text-[#D94E28]" />
-                            <span>نسخ رسالة تحويل عربون إنستاباي</span>
-                          </button>
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                            <button
+                              onClick={() => setConfirmedReminderModal(req)}
+                              className="flex-1 py-2 px-3.5 rounded-xl bg-[#FFF7ED] border border-[#FFEDD5] hover:bg-[#FFEDD5] text-[#C2411C] font-['Cairo'] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                            >
+                              <CreditCard className="w-4 h-4 text-[#D94E28]" />
+                              <span>رسالة تحويل إنستاباي</span>
+                            </button>
+                            <button
+                              onClick={() => handleCancelUnpaidBooking(req)}
+                              className="py-2 px-3.5 rounded-xl bg-[#FEF2F2] border border-[#FECACA] hover:bg-[#FEE2E2] text-[#DC2626] font-['Cairo'] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                              title="إلغاء الحجز لعدم تحويل الفلوس وإعادة فتح الغرفة فوراً للنزلاء"
+                            >
+                              <X className="w-4 h-4 text-[#DC2626]" />
+                              <span>إلغاء الحجز لعدم تحويل الفلوس (إعادة فتح الغرفة)</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {isCancelled && (
+                          <div className="flex items-center justify-between gap-2">
+                            <button
+                              onClick={() => handleUpdateBookingStatus(req, 'pending')}
+                              className="py-1.5 px-3 rounded-xl bg-[#FAF8F5] hover:bg-[#E2E8F0] text-[#0F223D] font-['Cairo'] font-bold text-xs transition-colors"
+                            >
+                              إعادة تعيين (قيد الانتظار)
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBooking(req)}
+                              className="py-1.5 px-3 rounded-xl bg-[#FEE2E2] hover:bg-[#FECACA] text-[#991B1B] font-['Cairo'] font-bold text-xs flex items-center gap-1 transition-colors"
+                              title="حذف نهائي من قاعدة البيانات"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>حذف السجل نهائياً</span>
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1038,6 +1122,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                     triple_price: '',
                     quadruple_price: '',
                     display_order: rooms.length + 1,
+                    total_units: 6,
                   })
                 }
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-xs hover:bg-[#C2411C] transition-all shadow-sm"
@@ -1060,6 +1145,13 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                       </h3>
                       <span className="text-[10px] font-['Cairo'] font-bold px-2 py-0.5 rounded-full bg-[#FAF8F5] text-[#64748B]">
                         ترتيب: {room.display_order}
+                      </span>
+                    </div>
+
+                    <div className="bg-[#FAF8F5] p-2 rounded-lg flex items-center justify-between border border-[#E2E8F0] mb-3 text-xs font-['Cairo']">
+                      <span className="text-[#64748B] text-[11px] font-['Tajawal']">عدد الغرف الإجمالي في الكامب:</span>
+                      <span className="font-bold text-[#0F223D] bg-white px-2 py-0.5 rounded border border-[#CBD5E1]">
+                        {room.total_units || 6} غرف
                       </span>
                     </div>
 
@@ -1450,6 +1542,69 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
       )}
 
       {/* ======================================================== */}
+      {/* CANCELLATION NOTICE MODAL (FOR UNPAID BOOKINGS) */}
+      {/* ======================================================== */}
+      {cancellationNoticeModal && (
+        <div className="fixed inset-0 z-50 bg-[#0F223D]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 border border-[#E2E8F0] shadow-2xl">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#F1F5F9]">
+              <div className="flex items-center gap-2">
+                <X className="w-5 h-5 text-[#DC2626]" />
+                <h3 className="font-['Cairo'] font-bold text-base sm:text-lg text-[#0F223D]">
+                  تم إلغاء الحجز وإعادة فتح الغرفة
+                </h3>
+              </div>
+              <button
+                onClick={() => setCancellationNoticeModal(null)}
+                className="p-1 rounded-full text-[#64748B] hover:bg-[#F1F5F9]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="font-['Tajawal'] text-xs sm:text-sm text-[#64748B] mb-3">
+              تم إلغاء الحجز وإعادة إتاحة تواريخ الغرفة فوراً في التقويم لجميع النزلاء. يمكنك الآن إرسال رسالة الإشعار الجاهزة للنزيل عبر واتساب أو نسخها:
+            </p>
+
+            {/* Ready-to-copy textarea */}
+            <textarea
+              readOnly
+              rows={7}
+              value={getCancellationCopyText(cancellationNoticeModal)}
+              className="w-full p-3.5 rounded-2xl bg-[#FEF2F2] border border-[#FECACA] text-xs font-['Tajawal'] text-[#7F1D1D] leading-relaxed mb-4 focus:outline-none"
+            />
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row items-center gap-2.5">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(getCancellationCopyText(cancellationNoticeModal));
+                  setCopiedCancellation(true);
+                  setTimeout(() => setCopiedCancellation(false), 3000);
+                }}
+                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[#0F223D] hover:bg-[#1E3A5F] text-white font-['Cairo'] font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
+              >
+                {copiedCancellation ? <Check className="w-4 h-4 text-[#86EFAC]" /> : <Copy className="w-4 h-4" />}
+                <span>{copiedCancellation ? 'تم النسخ إلى الحافظة!' : 'نسخ الرسالة بالكامل'}</span>
+              </button>
+
+              <a
+                href={`https://wa.me/${cancellationNoticeModal.guest_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                  getCancellationCopyText(cancellationNoticeModal)
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-['Cairo'] font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>إرسال للنزيل واتساب</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
       {/* MODAL: EDIT ROOM */}
       {/* ======================================================== */}
       {editingRoom && (
@@ -1457,7 +1612,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto border border-[#E2E8F0] shadow-2xl">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#F1F5F9]">
               <h3 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                {editingRoom.id ? 'تعديل أسعار الغرفة' : 'إضافة غرفة جديدة'}
+                {editingRoom.id ? 'تعديل أسعار وسعة الغرفة' : 'إضافة غرفة جديدة'}
               </h3>
               <button
                 onClick={() => setEditingRoom(null)}
@@ -1480,6 +1635,24 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                   placeholder="غرف ديلوكس مطلة على البحر / Seaview Deluxe Rooms"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-sm font-['Tajawal']"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
+                  إجمالي عدد الغرف المتوفرة في الكامب (Capacity Units) *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={editingRoom.total_units ?? 6}
+                  onChange={(e) => setEditingRoom({ ...editingRoom, total_units: parseInt(e.target.value) || 1 })}
+                  placeholder="6"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-sm font-mono"
+                />
+                <p className="text-[11px] text-[#64748B] font-['Tajawal'] mt-1">
+                  العدد الفعلي المتاح في الكامب من هذا النوع (مثلاً 6 غرف ديلوكس). لن يتم قفل اليوم في التقويم إلا إذا تم حجز كافة الغرف لنفس التاريخ.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

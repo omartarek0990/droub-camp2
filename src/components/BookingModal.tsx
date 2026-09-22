@@ -170,17 +170,37 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     return dateStr < todayStr;
   };
 
-  // Check if a specific date is already booked and confirmed
-  const isDateBooked = (dateStr: string) => {
+  // Total available units for this room type or package (default 6 for rooms)
+  const totalUnits = useMemo(() => {
+    if (requestType === 'room' && selectedRoom) {
+      return Number(selectedRoom.total_units) || 6;
+    }
+    return 10;
+  }, [requestType, selectedRoom]);
+
+  // Count how many confirmed bookings exist on a given date for this room/package
+  const getBookedCountOnDate = (dateStr: string) => {
+    let count = 0;
     for (const range of confirmedRanges) {
       if (dateStr >= range.check_in && dateStr < range.check_out) {
-        return true;
+        count++;
       }
     }
-    return false;
+    return count;
   };
 
-  // Check if a range has any booked days in between
+  // Calculate remaining units for a date
+  const getRemainingUnitsOnDate = (dateStr: string) => {
+    const booked = getBookedCountOnDate(dateStr);
+    return Math.max(0, totalUnits - booked);
+  };
+
+  // Check if a specific date is FULLY booked (all units taken)
+  const isDateBooked = (dateStr: string) => {
+    return getBookedCountOnDate(dateStr) >= totalUnits;
+  };
+
+  // Check if a range has any fully booked days in between
   const hasBookedDaysBetween = (startStr: string, endStr: string) => {
     const current = new Date(startStr);
     const end = new Date(endStr);
@@ -628,6 +648,25 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   </div>
                 </div>
 
+                {/* Capacity & Multi-Room Inventory Notice */}
+                {requestType === 'room' && (
+                  <div className="bg-[#F0F9FF] border border-[#BAE6FD] rounded-xl p-2.5 flex items-center justify-between text-xs font-['Cairo']">
+                    <div className="flex items-center gap-1.5 text-[#0369A1] font-bold">
+                      <Bed className="w-4 h-4 text-[#0284C7]" />
+                      <span>
+                        {lang === 'ar'
+                          ? `سعة الغرف المتوفرة في الكامب: ${totalUnits} غرف`
+                          : `Total camp capacity for this type: ${totalUnits} units`}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-['Tajawal'] text-[#0369A1]/80 hidden sm:inline">
+                      {lang === 'ar'
+                        ? 'تظل الأيام متاحة حتى اكتمال حجز جميع الغرف'
+                        : 'Dates remain open until all units are booked'}
+                    </span>
+                  </div>
+                )}
+
                 {/* Calendar Month Navigation */}
                 <div className="flex items-center justify-between pt-1">
                   <button
@@ -683,6 +722,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
                     const past = isPastDate(cell.dateStr);
                     const booked = isDateBooked(cell.dateStr);
+                    const bookedCount = getBookedCountOnDate(cell.dateStr);
+                    const remainingUnits = getRemainingUnitsOnDate(cell.dateStr);
                     const isSelectedStart = checkIn === cell.dateStr;
                     const isSelectedEnd = checkOut === cell.dateStr;
                     const isInRange = checkIn && checkOut && cell.dateStr > checkIn && cell.dateStr < checkOut;
@@ -699,7 +740,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       btnClass = 'bg-[#0F223D] text-white font-black shadow-md ring-2 ring-[#D94E28]';
                     } else if (isInRange) {
                       btnClass = 'bg-[#E0F2FE] text-[#0369A1] font-bold';
+                    } else if (bookedCount > 0) {
+                      // Partially booked day but still has available rooms!
+                      btnClass = 'bg-[#FFFBEB] text-[#92400E] border border-[#FDE68A] hover:bg-[#FEF3C7]';
                     }
+
+                    const tooltipText = booked
+                      ? lang === 'ar'
+                        ? `مكتمل الحجز بالكامل (${totalUnits}/${totalUnits} غرف محجوزة)`
+                        : `Fully booked (${totalUnits}/${totalUnits} units taken)`
+                      : bookedCount > 0
+                      ? lang === 'ar'
+                        ? `متبقي ${remainingUnits} غرف متاحة من أصل ${totalUnits}`
+                        : `${remainingUnits} of ${totalUnits} units remaining`
+                      : cell.dateStr;
 
                     return (
                       <button
@@ -707,10 +761,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         type="button"
                         disabled={isDisabled}
                         onClick={() => handleDateClick(cell.dateStr)}
-                        className={`h-9 w-full rounded-lg text-xs font-['Cairo'] flex flex-col items-center justify-center transition-all ${btnClass}`}
-                        title={booked ? 'محجوز ومؤكد' : cell.dateStr}
+                        className={`h-9 w-full rounded-lg text-xs font-['Cairo'] flex flex-col items-center justify-center transition-all ${btnClass} relative`}
+                        title={tooltipText}
                       >
-                        <span>{cell.dayNum}</span>
+                        <span className="leading-none">{cell.dayNum}</span>
+                        {!past && !booked && bookedCount > 0 && (
+                          <span className="text-[8px] text-[#D97706] font-bold leading-none mt-0.5">
+                            {remainingUnits} متبقي
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -724,11 +783,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded bg-[#FEE2E2] border border-[#FCA5A5]"></span>
-                    <span>{lang === 'ar' ? 'محجوز مؤكد (غير متاح)' : 'Booked & Unavailable'}</span>
+                    <span>{lang === 'ar' ? `مكتمل الحجز (كل الـ ${totalUnits} غرف)` : `Full (${totalUnits} units)`}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded bg-[#FFFBEB] border border-[#FDE68A]"></span>
+                    <span>{lang === 'ar' ? 'حجز جزئي (متبقي غرف)' : 'Partially booked'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded bg-[#FAF8F5] border border-[#E2E8F0]"></span>
-                    <span>{lang === 'ar' ? 'متاح للحجز' : 'Available'}</span>
+                    <span>{lang === 'ar' ? 'متاح بالكامل' : 'Fully Available'}</span>
                   </div>
                 </div>
               </div>
