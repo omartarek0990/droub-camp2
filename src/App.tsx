@@ -23,8 +23,11 @@ import { OwnerDashboard } from './components/OwnerDashboard';
 import { BookingModal } from './components/BookingModal';
 
 export default function App() {
-  // Language State (Arabic is default)
-  const [lang, setLang] = useState<Language>('ar');
+  // Language State (Default is English 'en')
+  const [lang, setLang] = useState<Language>(() => {
+    const saved = localStorage.getItem('droub_camp_lang');
+    return saved === 'ar' || saved === 'en' ? (saved as Language) : 'en';
+  });
 
   // Owner View Hash detection (#owner)
   const [isOwnerView, setIsOwnerView] = useState<boolean>(() => {
@@ -51,10 +54,15 @@ export default function App() {
     occupancy: 'double',
   });
 
-  // Sync RTL and lang attribute with html element
+  // Sync RTL and lang attribute with html element & persist preference
   useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    try {
+      localStorage.setItem('droub_camp_lang', lang);
+    } catch {
+      // ignore storage errors
+    }
   }, [lang]);
 
   // Listen for hash changes to detect manual navigation to #owner

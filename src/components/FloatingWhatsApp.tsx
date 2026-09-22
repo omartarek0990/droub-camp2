@@ -30,7 +30,7 @@ export const FloatingWhatsApp: React.FC<FloatingWhatsAppProps> = ({ lang }) => {
         id="floating-whatsapp-btn"
         onClick={handleClick}
         aria-label="Contact Droub Camp on WhatsApp"
-        className="relative w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-xl hover:shadow-2xl active:scale-95 flex items-center justify-center transition-all duration-200 border-2 border-white focus:outline-none"
+        className="relative w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-90 active:shadow-inner flex items-center justify-center transform transition-all duration-150 border-2 border-white focus:outline-none cursor-pointer"
       >
         {/* Subtle breathing pulse ring */}
         <span className="absolute -inset-1 rounded-full bg-[#25D366]/40 animate-ping opacity-75 pointer-events-none"></span>
