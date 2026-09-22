@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="100%" height="100%">
+  <defs>
+    <clipPath id="d-fav-clip">
+      <path d="M 25 30 L 160 30 C 235 30 280 80 280 150 C 280 220 235 270 160 270 L 25 270 Z" />
+    </clipPath>
+  </defs>
+
+  <g transform="translate(15, 10)">
+    <!-- Inside the D (clipped) -->
+    <g clip-path="url(#d-fav-clip)">
+      <rect x="20" y="25" width="265" height="250" fill="#FFFFFF"/>
+      
+      <!-- Sun -->
+      <circle cx="50" cy="95" r="32" fill="none" stroke="#FBBF24" stroke-width="3.5" stroke-dasharray="8 4"/>
+      <circle cx="50" cy="95" r="22" fill="#FEF3C7" opacity="0.6"/>
+
+      <!-- Clouds -->
+      <path d="M 85 65 C 85 58 92 52 100 55 C 104 50 114 50 118 55 C 124 55 128 60 126 67 C 122 69 90 70 85 65 Z" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 135 60 C 135 55 140 50 146 52 C 150 48 158 48 162 52 C 166 52 170 56 168 62 C 165 64 140 65 135 60 Z" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Mountain Peaks -->
+      <polygon points="120,70 185,210 55,210" fill="#F8FAFC" stroke="#0F223D" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M 120 70 Q 115 130 100 210" stroke="#0F223D" stroke-width="3" fill="none"/>
+
+      <polygon points="75,115 135,220 20,220" fill="#FFFFFF" stroke="#0F223D" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M 75 115 Q 70 160 55 220" stroke="#0F223D" stroke-width="3" fill="none"/>
+
+      <!-- Right Peak with Campfire -->
+      <polygon points="195,100 260,230 130,230" fill="#FFFFFF" stroke="#0F223D" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M 195 100 Q 205 160 215 230" stroke="#0F223D" stroke-width="3" fill="none"/>
+
+      <!-- Campfire / Flame -->
+      <g transform="translate(195, 78)">
+        <line x1="-12" y1="18" x2="12" y2="23" stroke="#0F223D" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="12" y1="18" x2="-12" y2="23" stroke="#0F223D" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M 0 16 C -8 10 -6 0 0 -8 C 6 0 8 10 0 16 Z" fill="#D94E28" stroke="#D94E28" stroke-width="2"/>
+        <path d="M 0 14 C -4 9 -3 3 0 -2 C 3 3 4 9 0 14 Z" fill="#FBBF24"/>
+      </g>
+
+      <!-- Trees -->
+      <g transform="translate(45, 185)">
+        <line x1="0" y1="0" x2="0" y2="35" stroke="#0F223D" stroke-width="3"/>
+        <path d="M 0 -5 L -9 8 L -4 8 L -11 20 L 11 20 L 4 8 L 9 8 Z" fill="#15803D" stroke="#0F223D" stroke-width="2.5" stroke-linejoin="round"/>
+      </g>
+      <g transform="translate(68, 182)">
+        <line x1="0" y1="0" x2="0" y2="38" stroke="#0F223D" stroke-width="3"/>
+        <path d="M 0 -6 L -10 8 L -5 8 L -12 21 L 12 21 L 5 8 L 10 8 Z" fill="#15803D" stroke="#0F223D" stroke-width="2.5" stroke-linejoin="round"/>
+      </g>
+      <g transform="translate(90, 185)">
+        <line x1="0" y1="0" x2="0" y2="35" stroke="#0F223D" stroke-width="3"/>
+        <path d="M 0 -5 L -9 8 L -4 8 L -11 20 L 11 20 L 4 8 L 9 8 Z" fill="#15803D" stroke="#0F223D" stroke-width="2.5" stroke-linejoin="round"/>
+      </g>
+
+      <!-- Tent -->
+      <g transform="translate(180, 195)">
+        <polygon points="0,0 -24,30 24,30" fill="#FFFFFF" stroke="#0F223D" stroke-width="3.5" stroke-linejoin="round"/>
+        <line x1="0" y1="0" x2="0" y2="30" stroke="#0F223D" stroke-width="2.5"/>
+        <line x1="0" y1="0" x2="0" y2="-10" stroke="#0F223D" stroke-width="2"/>
+        <polygon points="0,-10 8,-7 0,-4" fill="#D94E28"/>
+      </g>
+
+      <!-- Water Waves -->
+      <g stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <path d="M 20 230 L 35 224 L 50 230 L 65 224 L 80 230 L 95 224 L 110 230 L 125 224 L 140 230 L 155 224 L 170 230 L 185 224 L 200 230 L 215 224 L 230 230 L 245 224 L 260 230 L 275 224" />
+        <path d="M 20 242 L 35 236 L 50 242 L 65 236 L 80 242 L 95 236 L 110 242 L 125 236 L 140 242 L 155 236 L 170 242 L 185 236 L 200 242 L 215 236 L 230 242 L 245 236 L 260 242 L 275 236" />
+        <path d="M 20 254 L 35 248 L 50 254 L 65 248 L 80 254 L 95 248 L 110 254 L 125 248 L 140 254 L 155 248 L 170 254 L 185 248 L 200 254 L 215 248 L 230 254 L 245 248 L 260 254 L 275 248" />
+      </g>
+    </g>
+
+    <!-- Outer 'D' Line -->
+    <path d="M 25 30 L 160 30 C 235 30 280 80 280 150 C 280 220 235 270 160 270 L 25 270 Z" 
+          fill="none" 
+          stroke="#0F223D" 
+          stroke-width="7" 
+          stroke-linejoin="round" 
+          stroke-linecap="round"/>
+  </g>
+</svg>

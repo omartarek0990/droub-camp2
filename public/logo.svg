@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <!-- Background -->
+  <rect width="500" height="500" fill="transparent"/>
+  
+  <g transform="translate(100, 30)">
+    <!-- The outer 'D' shape boundary -->
+    <!-- Clip path to keep interior elements cleanly inside the D -->
+    <defs>
+      <clipPath id="d-clip">
+        <path d="M 25 30 L 160 30 C 235 30 280 80 280 150 C 280 220 235 270 160 270 L 25 270 Z" />
+      </clipPath>
+    </defs>
+
+    <!-- Inside the D (clipped) -->
+    <g clip-path="url(#d-clip)">
+      <!-- Sky background subtle fill -->
+      <rect x="20" y="25" width="265" height="250" fill="#FFFFFF"/>
+      
+      <!-- Sun -->
+      <circle cx="50" cy="95" r="32" fill="none" stroke="#FBBF24" stroke-width="3.5" stroke-dasharray="8 4"/>
+      <circle cx="50" cy="95" r="22" fill="#FEF3C7" opacity="0.6"/>
+
+      <!-- Clouds -->
+      <!-- Cloud 1 -->
+      <path d="M 85 65 C 85 58 92 52 100 55 C 104 50 114 50 118 55 C 124 55 128 60 126 67 C 122 69 90 70 85 65 Z" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Cloud 2 -->
+      <path d="M 135 60 C 135 55 140 50 146 52 C 150 48 158 48 162 52 C 166 52 170 56 168 62 C 165 64 140 65 135 60 Z" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Mountain Peaks -->
+      <!-- Back Peak -->
+      <polygon points="120,70 185,210 55,210" fill="#F8FAFC" stroke="#0F223D" stroke-width="4.5" stroke-linejoin="round"/>
+      <!-- Back Peak shading line -->
+      <path d="M 120 70 Q 115 130 100 210" stroke="#0F223D" stroke-width="3" fill="none"/>
+
+      <!-- Left Peak -->
+      <polygon points="75,115 135,220 20,220" fill="#FFFFFF" stroke="#0F223D" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M 75 115 Q 70 160 55 220" stroke="#0F223D" stroke-width="3" fill="none"/>
+
+      <!-- Right Peak with Campfire on top -->
+      <polygon points="195,100 260,230 130,230" fill="#FFFFFF" stroke="#0F223D" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M 195 100 Q 205 160 215 230" stroke="#0F223D" stroke-width="3" fill="none"/>
+
+      <!-- Campfire / Flame on right peak -->
+      <g transform="translate(195, 78)">
+        <!-- Wood logs -->
+        <line x1="-12" y1="18" x2="12" y2="23" stroke="#0F223D" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="12" y1="18" x2="-12" y2="23" stroke="#0F223D" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- Flame (warm red/terracotta from logo) -->
+        <path d="M 0 16 C -8 10 -6 0 0 -8 C 6 0 8 10 0 16 Z" fill="#D94E28" stroke="#D94E28" stroke-width="2"/>
+        <path d="M 0 14 C -4 9 -3 3 0 -2 C 3 3 4 9 0 14 Z" fill="#FBBF24"/>
+      </g>
+
+      <!-- Trees on bottom left -->
+      <!-- Tree 1 -->
+      <g transform="translate(45, 185)">
+        <line x1="0" y1="0" x2="0" y2="35" stroke="#0F223D" stroke-width="3"/>
+        <path d="M 0 -5 L -9 8 L -4 8 L -11 20 L 11 20 L 4 8 L 9 8 Z" fill="#15803D" stroke="#0F223D" stroke-width="2.5" stroke-linejoin="round"/>
+      </g>
+      <!-- Tree 2 -->
+      <g transform="translate(68, 182)">
+        <line x1="0" y1="0" x2="0" y2="38" stroke="#0F223D" stroke-width="3"/>
+        <path d="M 0 -6 L -10 8 L -5 8 L -12 21 L 12 21 L 5 8 L 10 8 Z" fill="#15803D" stroke="#0F223D" stroke-width="2.5" stroke-linejoin="round"/>
+      </g>
+      <!-- Tree 3 -->
+      <g transform="translate(90, 185)">
+        <line x1="0" y1="0" x2="0" y2="35" stroke="#0F223D" stroke-width="3"/>
+        <path d="M 0 -5 L -9 8 L -4 8 L -11 20 L 11 20 L 4 8 L 9 8 Z" fill="#15803D" stroke="#0F223D" stroke-width="2.5" stroke-linejoin="round"/>
+      </g>
+
+      <!-- Tent on bottom right -->
+      <g transform="translate(180, 195)">
+        <!-- Tent outline -->
+        <polygon points="0,0 -24,30 24,30" fill="#FFFFFF" stroke="#0F223D" stroke-width="3.5" stroke-linejoin="round"/>
+        <!-- Tent opening -->
+        <line x1="0" y1="0" x2="0" y2="30" stroke="#0F223D" stroke-width="2.5"/>
+        <line x1="0" y1="30" x2="-8" y2="18" stroke="#0F223D" stroke-width="2"/>
+        <line x1="0" y1="30" x2="8" y2="18" stroke="#0F223D" stroke-width="2"/>
+        <!-- Tent flag -->
+        <line x1="0" y1="0" x2="0" y2="-10" stroke="#0F223D" stroke-width="2"/>
+        <polygon points="0,-10 8,-7 0,-4" fill="#D94E28"/>
+      </g>
+
+      <!-- Water Waves at bottom (Red Sea / Gulf of Aqaba zigzags) -->
+      <g stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <path d="M 20 230 L 35 224 L 50 230 L 65 224 L 80 230 L 95 224 L 110 230 L 125 224 L 140 230 L 155 224 L 170 230 L 185 224 L 200 230 L 215 224 L 230 230 L 245 224 L 260 230 L 275 224" />
+        <path d="M 20 242 L 35 236 L 50 242 L 65 236 L 80 242 L 95 236 L 110 242 L 125 236 L 140 242 L 155 236 L 170 242 L 185 236 L 200 242 L 215 236 L 230 242 L 245 236 L 260 242 L 275 236" />
+        <path d="M 20 254 L 35 248 L 50 254 L 65 248 L 80 254 L 95 248 L 110 254 L 125 248 L 140 254 L 155 248 L 170 254 L 185 248 L 200 254 L 215 248 L 230 254 L 245 248 L 260 254 L 275 248" />
+      </g>
+    </g>
+
+    <!-- Thick Outer 'D' Line -->
+    <path d="M 25 30 L 160 30 C 235 30 280 80 280 150 C 280 220 235 270 160 270 L 25 270 Z" 
+          fill="none" 
+          stroke="#0F223D" 
+          stroke-width="7" 
+          stroke-linejoin="round" 
+          stroke-linecap="round"/>
+  </g>
+
+  <!-- Typography below the D -->
+  <!-- "Droub Camp" -->
+  <text x="250" y="360" 
+        text-anchor="middle" 
+        fill="#0F223D" 
+        font-family="'Cairo', 'Outfit', sans-serif" 
+        font-size="46" 
+        font-weight="900" 
+        letter-spacing="0.5">
+    Droub Camp
+  </text>
+
+  <!-- "NUWEIBA - SOUTH SINAI" -->
+  <text x="250" y="392" 
+        text-anchor="middle" 
+        fill="#64748B" 
+        font-family="'Cairo', 'Outfit', sans-serif" 
+        font-size="16" 
+        font-weight="700" 
+        letter-spacing="4">
+    NUWEIBA - SOUTH SINAI
+  </text>
+
+  <!-- Bottom decorative subtle wave -->
+  <g stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(0, 435)">
+    <path d="M 30 10 L 45 4 L 60 10 L 75 4 L 90 10 L 105 4 L 120 10 L 135 4 L 150 10 L 165 4 L 180 10 L 195 4 L 210 10 L 225 4 L 240 10 L 255 4 L 270 10 L 285 4 L 300 10 L 315 4 L 330 10 L 345 4 L 360 10 L 375 4 L 390 10 L 405 4 L 420 10 L 435 4 L 450 10 L 465 4" />
+    <path d="M 30 22 L 45 16 L 60 22 L 75 16 L 90 22 L 105 16 L 120 22 L 135 16 L 150 22 L 165 16 L 180 22 L 195 16 L 210 22 L 225 16 L 240 22 L 255 16 L 270 22 L 285 16 L 300 22 L 315 16 L 330 22 L 345 16 L 360 22 L 375 16 L 390 22 L 405 16 L 420 22 L 435 16 L 450 22 L 465 16" />
+  </g>
+</svg>
