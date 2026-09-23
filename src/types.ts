@@ -9,6 +9,8 @@ export interface RoomPricing {
   description_ar?: string;
   description_en?: string;
   total_units?: number; // Total physical rooms of this category in the camp (e.g. 6)
+  image_url?: string;
+  images?: string[]; // Array of images for room gallery / slider
 }
 
 export interface PackageItem {

@@ -26,11 +26,9 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-12">
           {/* Col 1: Brand & Philosophy */}
           <div className="space-y-4">
-            <Logo variant="light" size="md" />
+            <Logo variant="light" size="md" lang={lang} />
             <p className="font-['Tajawal'] text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
-              {lang === 'ar'
-                ? 'ملاذ شاطئي أصيل في رأس شيطان، نويبع. حيث يلتقي البحر الأحمر بجبال جنوب سيناء، نعيش متعة البساطة والضيافة البدوية الأصيلة.'
-                : 'A peaceful beach sanctuary on Ras Shitan, Nuweiba. Where the Red Sea meets South Sinai mountains in timeless authenticity.'}
+              {t.footer.desc}
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
@@ -66,7 +64,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
           {/* Col 2: Quick Links */}
           <div>
             <h4 className="font-['Cairo'] font-bold text-base text-white mb-4 border-b border-white/10 pb-2">
-              {lang === 'ar' ? 'أقسام الكامب' : 'Quick Links'}
+              {t.footer.quickLinks}
             </h4>
             <ul className="space-y-2.5 font-['Cairo'] text-xs sm:text-sm text-[#CBD5E1]">
               <li>
@@ -75,7 +73,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
                   onClick={(e) => handleNavClick(e, '#accommodation')}
                   className="hover:text-[#D94E28] transition-colors"
                 >
-                  {t.navAccommodation}
+                  {t.nav.accommodation}
                 </a>
               </li>
               <li>
@@ -84,7 +82,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
                   onClick={(e) => handleNavClick(e, '#amenities')}
                   className="hover:text-[#D94E28] transition-colors"
                 >
-                  {t.navAmenities}
+                  {t.nav.amenities}
                 </a>
               </li>
               <li>
@@ -93,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
                   onClick={(e) => handleNavClick(e, '#packages')}
                   className="hover:text-[#D94E28] transition-colors"
                 >
-                  {t.navPackages}
+                  {t.nav.packages}
                 </a>
               </li>
               <li>
@@ -102,7 +100,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
                   onClick={(e) => handleNavClick(e, '#trips')}
                   className="hover:text-[#D94E28] transition-colors"
                 >
-                  {t.navTrips}
+                  {t.nav.trips}
                 </a>
               </li>
               <li>
@@ -111,7 +109,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
                   onClick={(e) => handleNavClick(e, '#gallery')}
                   className="hover:text-[#D94E28] transition-colors"
                 >
-                  {t.navGallery}
+                  {t.nav.gallery}
                 </a>
               </li>
             </ul>
@@ -120,26 +118,24 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
           {/* Col 3: Adventures & Highlights */}
           <div>
             <h4 className="font-['Cairo'] font-bold text-base text-white mb-4 border-b border-white/10 pb-2">
-              {lang === 'ar' ? 'رحلات ومغامرات سيناء' : 'Sinai Adventures'}
+              {t.footer.adventuresTitle}
             </h4>
             <ul className="space-y-2.5 font-['Tajawal'] text-xs sm:text-sm text-[#CBD5E1]">
-              <li>• وادي الوشواش والبحيرة العذبة</li>
-              <li>• الكانيون الملون والكانيون الأبيض</li>
-              <li>• طابا، جزيرة فرعون وقلعة صلاح الدين</li>
-              <li>• دهب، البلوهول وسفاري جبل الطويلات</li>
-              <li>• سنوركلينج الشعاب المرجانية الحرة</li>
+              {t.footer.adventuresItems.map((item, idx) => (
+                <li key={idx}>• {item}</li>
+              ))}
             </ul>
           </div>
 
           {/* Col 4: Contact & Location */}
           <div>
             <h4 className="font-['Cairo'] font-bold text-base text-white mb-4 border-b border-white/10 pb-2">
-              {lang === 'ar' ? 'معلومات التواصل' : 'Contact Info'}
+              {t.footer.contactTitle}
             </h4>
             <div className="space-y-3 font-['Tajawal'] text-xs sm:text-sm text-[#CBD5E1]">
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-[#D94E28] flex-shrink-0 mt-0.5" />
-                <span>شاطئ رأس شيطان، طريق طابا - نويبع، جنوب سيناء، مصر</span>
+                <span>{t.location.mapAddress}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-[#D94E28] flex-shrink-0" />
@@ -155,7 +151,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors dir-ltr"
                 >
-                  01061189414 (WhatsApp)
+                  01061189414 ({lang === 'ar' ? 'واتساب' : 'WhatsApp'})
                 </a>
               </div>
             </div>
@@ -164,9 +160,9 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-['Cairo'] text-[#94A3B8]">
-          <p>{t.rightsReserved}</p>
+          <p>{t.footer.rightsReserved}</p>
           <div className="flex items-center gap-1 text-[#D94E28]">
-            <span>صُنعت بروح سيناء الأصيلة</span>
+            <span>{t.footer.craftedWithSinaiSpirit}</span>
             <Heart className="w-3.5 h-3.5 fill-current" />
           </div>
         </div>
@@ -174,3 +170,4 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
     </footer>
   );
 };
+

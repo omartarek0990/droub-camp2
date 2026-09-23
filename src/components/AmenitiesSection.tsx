@@ -13,54 +13,60 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ lang }) => {
   const amenities = [
     {
       icon: Utensils,
-      title: t.amenity1Title,
-      description: t.amenity1Desc,
-      tag: lang === 'ar' ? 'مشمول بالإقامة' : 'Included in Stay',
+      title: t.amenities.item1Title,
+      description: t.amenities.item1Desc,
+      tag: t.amenities.includedTag,
       highlight: true,
     },
     {
       icon: Coffee,
-      title: t.amenity2Title,
-      description: t.amenity2Desc,
-      tag: lang === 'ar' ? 'طوال اليوم' : 'All-Day Dining',
+      title: t.amenities.item2Title,
+      description: t.amenities.item2Desc,
+      tag: t.amenities.allDayTag,
       highlight: false,
     },
     {
       icon: Waves,
-      title: t.amenity3Title,
-      description: t.amenity3Desc,
-      tag: lang === 'ar' ? 'مباشرة على البحر' : 'Beachfront',
+      title: t.amenities.item3Title,
+      description: t.amenities.item3Desc,
+      tag: t.amenities.beachfrontTag,
       highlight: true,
     },
     {
       icon: Eye,
-      title: t.amenity4Title,
-      description: t.amenity4Desc,
-      tag: lang === 'ar' ? 'مجاناً للنزلاء' : 'Complimentary',
+      title: t.amenities.item4Title,
+      description: t.amenities.item4Desc,
+      tag: t.amenities.complimentaryTag,
       highlight: false,
     },
     {
       icon: Gamepad2,
-      title: t.amenity5Title,
-      description: t.amenity5Desc,
-      tag: lang === 'ar' ? 'أنشطة شاطئية' : 'Beach Activities',
+      title: t.amenities.item5Title,
+      description: t.amenities.item5Desc,
+      tag: t.amenities.activitiesTag,
       highlight: false,
     },
     {
       icon: Wifi,
-      title: t.amenity6Title,
-      description: t.amenity6Desc,
-      tag: lang === 'ar' ? 'إنترنت مجاني' : 'Free Internet',
+      title: t.amenities.item6Title,
+      description: t.amenities.item6Desc,
+      tag: t.amenities.freeWifiTag,
       highlight: false,
     },
     {
       icon: Bus,
-      title: t.amenity7Title,
-      description: t.amenity7Desc,
-      tag: lang === 'ar' ? 'انتقالات خاصة' : 'Transfers Available',
+      title: t.amenities.item7Title,
+      description: t.amenities.item7Desc,
+      tag: t.amenities.transfersTag,
       highlight: true,
     },
   ];
+
+  const transferMsg = encodeURIComponent(
+    lang === 'ar'
+      ? 'مرحباً، أود الاستفسار عن مواعيد وأسعار انتقالات دروب كامب'
+      : 'Hello, I would like to inquire about Droub Camp transfer schedules and prices'
+  );
 
   return (
     <section id="amenities" className="py-14 sm:py-20 bg-[#F4EFEA] border-t border-[#E8E2D8]">
@@ -68,13 +74,13 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ lang }) => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
           <span className="inline-block text-[#D94E28] font-['Cairo'] font-bold text-xs sm:text-sm tracking-wider uppercase bg-[#FFF1ED] border border-[#FFDDD3] px-3.5 py-1 rounded-full mb-2.5">
-            {lang === 'ar' ? 'خدمات ومرافق الكامب' : 'Hospitality & Inclusions'}
+            {t.amenities.badge}
           </span>
           <h2 className="font-['Cairo'] font-black text-2xl sm:text-3xl md:text-4xl text-[#0F223D] tracking-tight mb-3">
-            {t.amenitiesTitle}
+            {t.amenities.title}
           </h2>
           <p className="font-['Tajawal'] text-base sm:text-lg text-[#475569] leading-relaxed">
-            {t.amenitiesSubtitle}
+            {t.amenities.subtitle}
           </p>
         </div>
 
@@ -116,7 +122,7 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ lang }) => {
                 {/* Subtle reassurance icon */}
                 <div className="mt-4 pt-3 border-t border-[#F1F5F9] flex items-center gap-1.5 text-[11px] font-['Cairo'] text-[#64748B]">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#16a34a]" />
-                  <span>{lang === 'ar' ? 'متاح ومضمون لجميع النزلاء' : 'Available for all guests'}</span>
+                  <span>{t.amenities.guaranteedReassurance}</span>
                 </div>
               </div>
             );
@@ -131,25 +137,24 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ lang }) => {
             </div>
             <div>
               <h4 className="font-['Cairo'] font-bold text-base sm:text-lg text-[#0F223D]">
-                {lang === 'ar' ? 'خدمة الانتقالات المباشرة للكامب' : 'Direct Transportation to Droub Camp'}
+                {t.amenities.transferBannerTitle}
               </h4>
               <p className="font-['Tajawal'] text-xs sm:text-sm text-[#64748B] mt-0.5">
-                {lang === 'ar'
-                  ? 'نوفر رحلات وباصات مكيفة خاصة من وإلى: القاهرة • الإسكندرية • المحلة الكبرى • المنصورة • طنطا • كفر الشيخ (برسوم إضافية مخفضة لنزلائنا).'
-                  : 'Door-to-door shuttle buses available from: Cairo • Alexandria • El Mahalla • Mansoura • Tanta • Kafr El Sheikh (at discounted rates).'}
+                {t.amenities.transferBannerDesc}
               </p>
             </div>
           </div>
           <a
-            href="https://wa.me/201061189414?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D9%88%D8%AF%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%B9%D9%86%20%D9%85%D9%88%D8%A7%D8%B9%D9%8A%D8%AF%20%D9%88%D8%A3%D8%B3%D8%B9%D8%A7%D8%B1%20%D8%A7%D9%86%D8%AA%D9%82%D8%A7%D9%84%D8%A7%D8%AA%20%D8%AF%D8%B1%D9%88%D8%A8%20%D9%83%D8%A7%D9%85%D8%A8"
+            href={`https://wa.me/201061189414?text=${transferMsg}`}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full md:w-auto text-center px-6 py-3.5 rounded-xl bg-[#0F223D] hover:bg-[#1E3A5F] active:scale-95 text-white font-['Cairo'] font-bold text-xs sm:text-sm transition-all whitespace-nowrap shadow-sm"
           >
-            {lang === 'ar' ? 'استفسر عن مواعيد الانتقالات' : 'Ask about Transfers'}
+            {t.amenities.transferCTA}
           </a>
         </div>
       </div>
     </section>
   );
 };
+

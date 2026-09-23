@@ -211,7 +211,7 @@ export default function App() {
       <PricingSection
         rooms={rooms}
         lang={lang}
-        pricingNote={siteInfo.pricing_note}
+        pricingNote={lang === 'ar' ? siteInfo.pricing_note : undefined}
         onOpenBooking={handleOpenRoomBooking}
       />
 
@@ -229,11 +229,14 @@ export default function App() {
       <TripsSection
         trips={trips}
         lang={lang}
-        tripsIntro={siteInfo.trips_intro}
+        tripsIntro={lang === 'ar' ? siteInfo.trips_intro : undefined}
       />
 
       {/* 7. About the Camp & Philosophy */}
-      <AboutSection lang={lang} aboutText={siteInfo.about_philosophy} />
+      <AboutSection
+        lang={lang}
+        aboutText={lang === 'ar' ? siteInfo.about_philosophy : undefined}
+      />
 
       {/* 8. Photo Gallery with Lightbox Zoom (from gallery table) */}
       <GallerySection gallery={gallery} lang={lang} />
@@ -241,8 +244,8 @@ export default function App() {
       {/* 9. Location & Booking Section (Map, InstaPay steps, quick contact) */}
       <LocationBookingSection
         lang={lang}
-        bookingStep1={siteInfo.booking_step_1}
-        bookingStep2={siteInfo.booking_step_2}
+        bookingStep1={lang === 'ar' ? siteInfo.booking_step_1 : undefined}
+        bookingStep2={lang === 'ar' ? siteInfo.booking_step_2 : undefined}
         phone={siteInfo.phone}
         whatsapp={siteInfo.whatsapp}
         instagram={siteInfo.instagram}

@@ -37,6 +37,7 @@ import {
   Clock,
   CreditCard,
   ExternalLink,
+  Camera,
 } from 'lucide-react';
 
 interface OwnerDashboardProps {
@@ -86,9 +87,11 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
 
   // Uploading state & file input refs
   const [uploadingImage, setUploadingImage] = useState(false);
+  const roomFileRef = useRef<HTMLInputElement>(null);
   const packageFileRef = useRef<HTMLInputElement>(null);
   const tripFileRef = useRef<HTMLInputElement>(null);
   const galleryFileRef = useRef<HTMLInputElement>(null);
+  const [newRoomImageUrl, setNewRoomImageUrl] = useState('');
 
   // Check auth session
   useEffect(() => {
@@ -340,6 +343,58 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
     }
   };
 
+  // Upload multiple images for a Room
+  const handleMultipleRoomImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !editingRoom) return;
+
+    e.target.value = '';
+    setUploadingImage(true);
+
+    try {
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+        if (file.size > 15 * 1024 * 1024) continue;
+
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const cleanFileName = `room_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+
+        const { data, error } = await supabase.storage.from('images').upload(cleanFileName, file, {
+          cacheControl: '3600',
+          upsert: true,
+        });
+
+        if (!error && data) {
+          const { data: publicData } = supabase.storage.from('images').getPublicUrl(data.path);
+          if (publicData?.publicUrl) {
+            uploadedUrls.push(publicData.publicUrl);
+          }
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setEditingRoom((prev) => {
+          if (!prev) return prev;
+          const currentImages = prev.images || (prev.image_url ? [prev.image_url] : []);
+          return {
+            ...prev,
+            images: [...currentImages, ...uploadedUrls],
+            image_url: currentImages[0] || uploadedUrls[0],
+          };
+        });
+        showFeedback('success', `تم رفع ${uploadedUrls.length} صورة بنجاح للغرفة!`);
+      } else {
+        showFeedback('error', 'تعذر رفع الصور، تأكد من صحة صيغة الملفات وحجمها.');
+      }
+    } catch (err: any) {
+      showFeedback('error', `حدث خطأ أثناء رفع الصور: ${err.message}`);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   // Build copy-ready InstaPay message for confirmed booking
   const getInstaPayCopyText = (booking: BookingRequest) => {
     const halfDeposit = booking.total_price ? Math.round(booking.total_price * 0.5) : 0;
@@ -404,7 +459,8 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
     if (!editingRoom) return;
 
     try {
-      const payload = {
+      const roomImages = editingRoom.images || (editingRoom.image_url ? [editingRoom.image_url] : []);
+      const payload: any = {
         room_type: editingRoom.room_type,
         single_price: editingRoom.single_price ? Number(editingRoom.single_price) : null,
         double_price: editingRoom.double_price ? Number(editingRoom.double_price) : null,
@@ -412,6 +468,8 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
         quadruple_price: editingRoom.quadruple_price ? Number(editingRoom.quadruple_price) : null,
         display_order: editingRoom.display_order ? Number(editingRoom.display_order) : 1,
         total_units: editingRoom.total_units ? Number(editingRoom.total_units) : 6,
+        images: roomImages,
+        image_url: roomImages[0] || null,
       };
 
       if (editingRoom.id) {
@@ -1123,6 +1181,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                     quadruple_price: '',
                     display_order: rooms.length + 1,
                     total_units: 6,
+                    images: [],
                   })
                 }
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-xs hover:bg-[#C2411C] transition-all shadow-sm"
@@ -1133,66 +1192,93 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {rooms.map((room) => (
-                <div
-                  key={room.id}
-                  className="bg-white rounded-2xl p-5 border border-[#E2E8F0] shadow-sm flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <h3 className="font-['Cairo'] font-bold text-base text-[#0F223D]">
-                        {room.room_type}
-                      </h3>
-                      <span className="text-[10px] font-['Cairo'] font-bold px-2 py-0.5 rounded-full bg-[#FAF8F5] text-[#64748B]">
-                        ترتيب: {room.display_order}
-                      </span>
+              {rooms.map((room) => {
+                const roomImgs = room.images && room.images.length > 0 ? room.images : (room.image_url ? [room.image_url] : []);
+                return (
+                  <div
+                    key={room.id}
+                    className="bg-white rounded-2xl p-5 border border-[#E2E8F0] shadow-sm flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Image Preview & Photo Count */}
+                      {roomImgs.length > 0 && (
+                        <div className="relative h-32 w-full rounded-xl overflow-hidden mb-3 border border-[#E2E8F0] bg-[#FAF8F5]">
+                          <img
+                            src={roomImgs[0]}
+                            alt={room.room_type}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=400&q=70';
+                            }}
+                          />
+                          <span className="absolute bottom-2 start-2 bg-black/70 backdrop-blur-xs text-white text-[10px] font-['Cairo'] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Camera className="w-3 h-3 text-[#D94E28]" />
+                            <span>{roomImgs.length} صور</span>
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <h3 className="font-['Cairo'] font-bold text-base text-[#0F223D]">
+                          {room.room_type}
+                        </h3>
+                        <span className="text-[10px] font-['Cairo'] font-bold px-2 py-0.5 rounded-full bg-[#FAF8F5] text-[#64748B]">
+                          ترتيب: {room.display_order}
+                        </span>
+                      </div>
+
+                      <div className="bg-[#FAF8F5] p-2 rounded-lg flex items-center justify-between border border-[#E2E8F0] mb-3 text-xs font-['Cairo']">
+                        <span className="text-[#64748B] text-[11px] font-['Tajawal']">عدد الغرف الإجمالي في الكامب:</span>
+                        <span className="font-bold text-[#0F223D] bg-white px-2 py-0.5 rounded border border-[#CBD5E1]">
+                          {room.total_units || 6} غرف
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs font-['Cairo'] mb-4">
+                        <div className="bg-[#FAF8F5] p-2 rounded-lg">
+                          <span className="text-[#64748B] block text-[10px]">فردي (Single):</span>
+                          <span className="font-bold text-[#0F223D]">{room.single_price || '—'} ج.م</span>
+                        </div>
+                        <div className="bg-[#FAF8F5] p-2 rounded-lg">
+                          <span className="text-[#64748B] block text-[10px]">مزدوج (Double):</span>
+                          <span className="font-bold text-[#D94E28]">{room.double_price || '—'} ج.م</span>
+                        </div>
+                        <div className="bg-[#FAF8F5] p-2 rounded-lg">
+                          <span className="text-[#64748B] block text-[10px]">ثلاثي (Triple):</span>
+                          <span className="font-bold text-[#0F223D]">{room.triple_price || '—'} ج.م</span>
+                        </div>
+                        <div className="bg-[#FAF8F5] p-2 rounded-lg">
+                          <span className="text-[#64748B] block text-[10px]">رباعي (Quad):</span>
+                          <span className="font-bold text-[#0F223D]">{room.quadruple_price || '—'} ج.م</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="bg-[#FAF8F5] p-2 rounded-lg flex items-center justify-between border border-[#E2E8F0] mb-3 text-xs font-['Cairo']">
-                      <span className="text-[#64748B] text-[11px] font-['Tajawal']">عدد الغرف الإجمالي في الكامب:</span>
-                      <span className="font-bold text-[#0F223D] bg-white px-2 py-0.5 rounded border border-[#CBD5E1]">
-                        {room.total_units || 6} غرف
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-xs font-['Cairo'] mb-4">
-                      <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                        <span className="text-[#64748B] block text-[10px]">فردي (Single):</span>
-                        <span className="font-bold text-[#0F223D]">{room.single_price || '—'} ج.م</span>
-                      </div>
-                      <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                        <span className="text-[#64748B] block text-[10px]">مزدوج (Double):</span>
-                        <span className="font-bold text-[#D94E28]">{room.double_price || '—'} ج.م</span>
-                      </div>
-                      <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                        <span className="text-[#64748B] block text-[10px]">ثلاثي (Triple):</span>
-                        <span className="font-bold text-[#0F223D]">{room.triple_price || '—'} ج.م</span>
-                      </div>
-                      <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                        <span className="text-[#64748B] block text-[10px]">رباعي (Quad):</span>
-                        <span className="font-bold text-[#0F223D]">{room.quadruple_price || '—'} ج.م</span>
-                      </div>
+                    <div className="flex items-center gap-2 pt-3 border-t border-[#F1F5F9]">
+                      <button
+                        onClick={() =>
+                          setEditingRoom({
+                            ...room,
+                            images: room.images || (room.image_url ? [room.image_url] : []),
+                          })
+                        }
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FAF8F5] hover:bg-[#E2E8F0] text-[#0F223D] font-['Cairo'] font-bold text-xs transition-colors"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 text-[#D94E28]" />
+                        <span>تعديل الغرفة والصور</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteRoom(room.id)}
+                        className="p-2 rounded-xl bg-[#FEE2E2] hover:bg-[#FECACA] text-[#991B1B] transition-colors"
+                        title="حذف"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2 pt-3 border-t border-[#F1F5F9]">
-                    <button
-                      onClick={() => setEditingRoom(room)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FAF8F5] hover:bg-[#E2E8F0] text-[#0F223D] font-['Cairo'] font-bold text-xs transition-colors"
-                    >
-                      <Edit2 className="w-3.5 h-3.5 text-[#D94E28]" />
-                      <span>تعديل الأسعار</span>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteRoom(room.id)}
-                      className="p-2 rounded-xl bg-[#FEE2E2] hover:bg-[#FECACA] text-[#991B1B] transition-colors"
-                      title="حذف"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1705,6 +1791,142 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                     className="w-full px-3.5 py-2 rounded-xl border border-[#CBD5E1] text-sm font-mono"
                   />
                 </div>
+              </div>
+
+              {/* ROOM IMAGES (GALLERY & SLIDER) */}
+              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#CBD5E1] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D]">
+                      صور الغرفة (سلايدر ومعرض صور الغرفة)
+                    </label>
+                    <p className="text-[11px] text-[#64748B] font-['Tajawal']">
+                      يمكنك رفع عدة صور أو إدخال روابط لعرضها في سلايدر صور الغرفة على الموقع.
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#0F223D] text-white">
+                    {(editingRoom.images?.length || (editingRoom.image_url ? 1 : 0))} صور
+                  </span>
+                </div>
+
+                {/* Hidden native multi-file input */}
+                <input
+                  ref={roomFileRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleMultipleRoomImagesUpload}
+                  className="hidden"
+                />
+
+                {/* Upload Actions */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    disabled={uploadingImage}
+                    onClick={() => roomFileRef.current?.click()}
+                    className="flex-1 py-2.5 px-3.5 rounded-xl bg-[#0F223D] hover:bg-[#1E3A5F] active:scale-95 text-white font-['Cairo'] font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs disabled:opacity-50"
+                  >
+                    <Upload className="w-4 h-4 text-[#D94E28]" />
+                    <span>{uploadingImage ? 'جاري رفع الصور...' : 'رفع عدة صور من جهازك'}</span>
+                  </button>
+                </div>
+
+                {/* Add image URL input */}
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={newRoomImageUrl}
+                    onChange={(e) => setNewRoomImageUrl(e.target.value)}
+                    placeholder="أو الصق رابط صورة مباشرة هنا (https://...)"
+                    className="flex-1 px-3 py-2 rounded-xl border border-[#CBD5E1] text-xs font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newRoomImageUrl.trim()) return;
+                      const current = editingRoom.images || (editingRoom.image_url ? [editingRoom.image_url] : []);
+                      setEditingRoom({
+                        ...editingRoom,
+                        images: [...current, newRoomImageUrl.trim()],
+                        image_url: current[0] || newRoomImageUrl.trim(),
+                      });
+                      setNewRoomImageUrl('');
+                      showFeedback('success', 'تمت إضافة رابط الصورة بنجاح!');
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[#FAF8F5] hover:bg-[#E2E8F0] border border-[#CBD5E1] font-['Cairo'] font-bold text-xs text-[#0F223D]"
+                  >
+                    إضافة
+                  </button>
+                </div>
+
+                {/* Image thumbnails list */}
+                {((editingRoom.images && editingRoom.images.length > 0) || editingRoom.image_url) ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2">
+                    {(editingRoom.images && editingRoom.images.length > 0 ? editingRoom.images : [editingRoom.image_url!]).map(
+                      (imgUrl, imgIdx) => (
+                        <div
+                          key={imgIdx}
+                          className="relative group rounded-xl overflow-hidden border border-[#CBD5E1] bg-white h-24 shadow-xs"
+                        >
+                          <img
+                            src={imgUrl}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=400&q=70';
+                            }}
+                          />
+                          {/* Badge: Main photo */}
+                          {imgIdx === 0 ? (
+                            <span className="absolute top-1 start-1 bg-[#D94E28] text-white text-[9px] font-['Cairo'] font-bold px-1.5 py-0.5 rounded shadow-xs">
+                              الرئيسية
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = [...(editingRoom.images || [])];
+                                const selected = current.splice(imgIdx, 1)[0];
+                                current.unshift(selected);
+                                setEditingRoom({
+                                  ...editingRoom,
+                                  images: current,
+                                  image_url: current[0],
+                                });
+                              }}
+                              className="absolute top-1 start-1 bg-black/60 hover:bg-black text-white text-[9px] font-['Cairo'] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              تعيين كرئيسية
+                            </button>
+                          )}
+
+                          {/* Delete photo button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const current = (editingRoom.images || []).filter((_, idx) => idx !== imgIdx);
+                              setEditingRoom({
+                                ...editingRoom,
+                                images: current,
+                                image_url: current[0] || null as any,
+                              });
+                            }}
+                            className="absolute top-1 end-1 p-1 bg-red-600 hover:bg-red-700 text-white rounded-lg opacity-85 hover:opacity-100 transition-opacity shadow-xs"
+                            title="حذف هذه الصورة"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-[#64748B] font-['Tajawal'] text-center py-2 italic">
+                    لا توجد صور مخصصة لهذه الغرفة بعد. يمكنك رفع صورة أو أكثر الآن.
+                  </p>
+                )}
               </div>
 
               <div>

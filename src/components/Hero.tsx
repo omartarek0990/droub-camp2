@@ -21,19 +21,22 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
 
   const dynamicTitle =
     lang === 'ar'
-      ? siteInfo?.hero_title_ar || 'حيث يلتقي البحر الأحمر بجبال سيناء'
-      : siteInfo?.hero_title_en || 'Where the Red Sea Meets the Mountains';
+      ? siteInfo?.hero_title_ar || t.hero.defaultTitle
+      : siteInfo?.hero_title_en || t.hero.defaultTitle;
 
   const dynamicSubtitle =
     lang === 'ar'
-      ? siteInfo?.hero_subheadline_ar || t.heroSubheadline
-      : siteInfo?.hero_subheadline_en || t.heroSubheadline;
+      ? siteInfo?.hero_subheadline_ar || t.hero.defaultSubtitle
+      : siteInfo?.hero_subheadline_en || t.hero.defaultSubtitle;
 
   const dynamicHeroImg =
     siteInfo?.hero_image_url ||
     'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=75';
 
-  const locationText = siteInfo?.location_name || 'شاطئ رأس شيطان • نويبع • جنوب سيناء';
+  const locationText =
+    lang === 'ar'
+      ? siteInfo?.location_name_ar || t.hero.brandEmblemBadge
+      : siteInfo?.location_name_en || t.hero.brandEmblemBadge;
 
   return (
     <section
@@ -83,23 +86,11 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
           id="hero-main-title"
           className="font-['Cairo'] font-black text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white tracking-tight leading-tight sm:leading-tight mb-4 drop-shadow-md"
         >
-          {lang === 'ar' ? (
-            <>
-              دروب كامب <span className="text-[#D94E28]">«DROUB»</span>
-              <br />
-              <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] block mt-2">
-                {dynamicTitle}
-              </span>
-            </>
-          ) : (
-            <>
-              Droub Camp <span className="text-[#D94E28]">«Ras Shitan»</span>
-              <br />
-              <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#F8FAFC] block mt-2">
-                {dynamicTitle}
-              </span>
-            </>
-          )}
+          {t.hero.titlePrefix} <span className="text-[#D94E28]">{t.hero.titleHighlighted}</span>
+          <br />
+          <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] block mt-2">
+            {dynamicTitle}
+          </span>
         </h1>
 
         {/* Subtitle */}
@@ -119,7 +110,7 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
             className="flex items-center justify-center gap-2.5 bg-[#D94E28] hover:bg-[#C2411C] active:scale-95 text-white font-['Cairo'] font-black text-base sm:text-lg px-8 py-4 rounded-2xl shadow-xl hover:shadow-[#D94E28]/40 transition-all duration-200 border border-[#F97316]/30"
           >
             <Calendar className="w-5 h-5" />
-            <span>{t.bookNow}</span>
+            <span>{t.hero.bookNowCTA}</span>
           </button>
 
           {/* Secondary Explore Button */}
@@ -129,23 +120,23 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
             className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 active:scale-95 text-white font-['Cairo'] font-bold text-base sm:text-lg px-6 py-4 rounded-2xl backdrop-blur-md border border-white/25 transition-all duration-200"
           >
             <Compass className="w-5 h-5 text-[#38BDF8]" />
-            <span>{t.exploreCamp}</span>
+            <span>{t.hero.exploreCTA}</span>
           </button>
         </div>
 
         {/* Quick Highlights Strip under CTA */}
         <div className="mt-10 sm:mt-14 pt-6 border-t border-white/15 grid grid-cols-3 gap-2 sm:gap-6 text-center w-full max-w-2xl">
           <div className="flex flex-col items-center">
-            <span className="font-['Cairo'] font-black text-lg sm:text-2xl text-[#38BDF8]">مباشرة</span>
-            <span className="font-['Tajawal'] text-xs sm:text-sm text-[#CBD5E1]">على شاطئ البحر</span>
+            <span className="font-['Cairo'] font-black text-lg sm:text-2xl text-[#38BDF8]">{t.hero.stat1Value}</span>
+            <span className="font-['Tajawal'] text-xs sm:text-sm text-[#CBD5E1]">{t.hero.stat1Label}</span>
           </div>
           <div className="flex flex-col items-center border-x border-white/15">
-            <span className="font-['Cairo'] font-black text-lg sm:text-2xl text-[#38BDF8]">نصف إقامة</span>
-            <span className="font-['Tajawal'] text-xs sm:text-sm text-[#CBD5E1]">إفطار وعشاء مشمولين</span>
+            <span className="font-['Cairo'] font-black text-lg sm:text-2xl text-[#38BDF8]">{t.hero.stat2Value}</span>
+            <span className="font-['Tajawal'] text-xs sm:text-sm text-[#CBD5E1]">{t.hero.stat2Label}</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="font-['Cairo'] font-black text-lg sm:text-2xl text-[#38BDF8]">سنوركلينج</span>
-            <span className="font-['Tajawal'] text-xs sm:text-sm text-[#CBD5E1]">شعاب مرجانية عذراء</span>
+            <span className="font-['Cairo'] font-black text-lg sm:text-2xl text-[#38BDF8]">{t.hero.stat3Value}</span>
+            <span className="font-['Tajawal'] text-xs sm:text-sm text-[#CBD5E1]">{t.hero.stat3Label}</span>
           </div>
         </div>
       </div>

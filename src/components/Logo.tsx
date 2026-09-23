@@ -1,10 +1,12 @@
 import React from 'react';
+import { Language } from '../types';
 
 interface LogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'light' | 'navy';
   showSubtext?: boolean;
+  lang?: Language;
 }
 
 export const Logo: React.FC<LogoProps> = ({
@@ -12,6 +14,7 @@ export const Logo: React.FC<LogoProps> = ({
   size = 'md',
   variant = 'navy',
   showSubtext = true,
+  lang = 'en',
 }) => {
   const iconDimensions = {
     sm: 'w-9 h-9',
@@ -28,6 +31,8 @@ export const Logo: React.FC<LogoProps> = ({
   const textColor = variant === 'light' ? 'text-white' : 'text-[#0F223D]';
   const subtextColor = variant === 'light' ? 'text-[#CBD5E1]' : 'text-[#64748B]';
 
+  const isAr = lang === 'ar';
+
   return (
     <div id="droub-brand-logo" className={`inline-flex items-center gap-2.5 sm:gap-3 select-none ${className}`}>
       {/* Real Droub Camp Logo Mark / Emblem */}
@@ -43,18 +48,19 @@ export const Logo: React.FC<LogoProps> = ({
       <div className="flex flex-col text-start">
         <div className="flex items-center gap-1.5 leading-none">
           <span className={`font-['Cairo'] font-black tracking-tight ${textColor} ${primaryTextSize}`}>
-            دروب كامب
+            {isAr ? 'دروب كامب' : 'Droub Camp'}
           </span>
-          <span className="text-[#D94E28] font-bold text-xs tracking-wider opacity-90 hidden sm:inline font-['Outfit']">
-            DROUB CAMP
+          <span className="text-[#D94E28] font-bold text-xs tracking-wider opacity-90 hidden sm:inline">
+            {isAr ? 'رأس شيطان' : 'Ras Shitan'}
           </span>
         </div>
         {showSubtext && (
           <span className={`font-['Tajawal'] font-medium text-[11px] sm:text-xs tracking-wide ${subtextColor} mt-0.5`}>
-            رأس شيطان • نويبع • جنوب سيناء
+            {isAr ? 'رأس شيطان • نويبع • جنوب سيناء' : 'Ras Shitan • Nuweiba • South Sinai'}
           </span>
         )}
       </div>
     </div>
   );
 };
+

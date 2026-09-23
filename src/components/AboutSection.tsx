@@ -14,35 +14,23 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ lang, aboutText }) =
   const pillars = [
     {
       icon: Waves,
-      title: lang === 'ar' ? 'مباشرة على البحر' : 'Right on the Beach',
-      desc:
-        lang === 'ar'
-          ? 'شاطئ بكر يجمع بين صخور الشعاب المرجانية للسنوركلينج وبقعة رملية ناعمة للسباحة والاستجمام.'
-          : 'Untouched shoreline with a marine-rich rocky reef for snorkeling and a sandy patch for swimming.',
+      title: t.about.pillar1Title,
+      desc: t.about.pillar1Desc,
     },
     {
       icon: Sunrise,
-      title: lang === 'ar' ? 'هدوء وسكينة مطلقة' : 'True Peace & Silence',
-      desc:
-        lang === 'ar'
-          ? 'بعيداً عن صخب المدن والمنتجعات الصاخبة، حيث لا تسمع سوى صوت تلاطم الأمواج ونسيم خليج العقبة.'
-          : 'Far from commercial resorts and crowd noise, where only the waves and mountain breeze are heard.',
+      title: t.about.pillar2Title,
+      desc: t.about.pillar2Desc,
     },
     {
       icon: Flame,
-      title: lang === 'ar' ? 'جلسات سمر أصيلة' : 'Campfire Traditions',
-      desc:
-        lang === 'ar'
-          ? 'أمسيات هادئة حول النار مع الشاي بالحبق الجبلي، وتبادل الحكايات تحت سماء مرصعة بنجوم جنوب سيناء.'
-          : 'Evenings around the campfire sipping wild Sinai herbal tea under some of the clearest skies on Earth.',
+      title: t.about.pillar3Title,
+      desc: t.about.pillar3Desc,
     },
     {
       icon: HeartHandshake,
-      title: lang === 'ar' ? 'ضيافة سيناوية حقيقية' : 'Sinai Warmth',
-      desc:
-        lang === 'ar'
-          ? 'فريق عمل ودود ومرحب يعاملك كفرد من العائلة، حريص على راحتك وتلبية كل ما تحتاجه لإجازة لا تُنسى.'
-          : 'A warm, welcoming family environment dedicated to making your Sinai escape restorative and unforgettable.',
+      title: t.about.pillar4Title,
+      desc: t.about.pillar4Desc,
     },
   ];
 
@@ -53,22 +41,14 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ lang, aboutText }) =
           {/* Text Content */}
           <div>
             <span className="inline-block text-[#D94E28] font-['Cairo'] font-bold text-xs sm:text-sm tracking-wider uppercase bg-[#FFF1ED] border border-[#FFDDD3] px-3.5 py-1 rounded-full mb-2.5">
-              {lang === 'ar' ? 'قصتنا وفلسفتنا' : 'Our Story & Philosophy'}
+              {t.about.badge}
             </span>
             <h2 className="font-['Cairo'] font-black text-2xl sm:text-3xl md:text-4xl text-[#0F223D] tracking-tight mb-4">
-              {lang === 'ar' ? 'دروب كامب — ملاذك البسيط في قلب رأس شيطان' : 'Droub Camp — Your Sinai Beach Haven'}
+              {t.about.title}
             </h2>
-            <div className="font-['Tajawal'] text-base sm:text-lg text-[#334155] leading-relaxed space-y-4">
+            <div className="font-['Tajawal'] text-base sm:text-lg text-[#334155] leading-relaxed">
               <p>
-                {aboutText ||
-                  (lang === 'ar'
-                    ? 'يقع «دروب كامب» مباشرة على شاطئ رأس شيطان الشهير بنويبع، جنوب سيناء، في البقعة الساحرة التي تحتضن فيها الجبال الشاهقة مياه البحر الأحمر الصافية. صُمم الكامب ليكون ملاذاً حقيقياً من صخب الحياة السريعة، حيث نؤمن بأن الفخامة الحقيقية تكمن في البساطة والنقاء.'
-                    : 'Droub Camp is nestled directly on the renowned Ras Shitan beach in Nuweiba, South Sinai, where rugged red mountains plunge straight into the turquoise Gulf of Aqaba. Designed as a sanctuary from modern city rush, we believe true luxury lies in simplicity, purity, and nature.')}
-              </p>
-              <p>
-                {lang === 'ar'
-                  ? 'سواء كنت تبحث عن استكشاف الشعاب المرجانية العذراء عبر السنوركلينج من الشاطئ الصخري، أو الاسترخاء على الرمال، أو الانطلاق في مغامرات الهايكنج في الوديان الساحرة كوادي الوشواش والكانيون الملون، فإن دروب كامب يقدم لك البيئة المثالية لتجديد طاقتك.'
-                  : 'Whether you wish to snorkel pristine house reefs straight from our rocky shoreline, unwind on the sand, or hike hidden canyons like Wadi El Washwash and the Colored Canyon, Droub Camp offers the ultimate atmosphere to reconnect.'}
+                {lang === 'ar' ? (aboutText || t.about.description || t.about.defaultP1) : (t.about.description || t.about.defaultP1)}
               </p>
             </div>
 
@@ -137,10 +117,10 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ lang, aboutText }) =
                 <img src="/logo-emblem.svg" alt="Droub Camp" className="w-full h-full object-contain" />
               </div>
               <span className="font-['Cairo'] font-black text-xs tracking-wider uppercase text-white block">
-                دروب كامب
+                {t.about.brandStampTitle}
               </span>
               <span className="font-['Tajawal'] text-[10px] text-[#94A3B8] block">
-                رأس شيطان • نويبع
+                {t.about.brandStampSubtitle}
               </span>
             </div>
           </div>
@@ -149,3 +129,4 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ lang, aboutText }) =
     </section>
   );
 };
+

@@ -30,14 +30,14 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const navLinks = [
-    { href: '#home', label: t.navHome },
-    { href: '#accommodation', label: t.navAccommodation },
-    { href: '#amenities', label: t.navAmenities },
-    { href: '#trips', label: t.navTrips },
-    { href: '#packages', label: t.navPackages },
-    { href: '#about', label: t.navAbout },
-    { href: '#gallery', label: t.navGallery },
-    { href: '#location', label: t.navLocation },
+    { href: '#home', label: t.nav.home },
+    { href: '#accommodation', label: t.nav.accommodation },
+    { href: '#amenities', label: t.nav.amenities },
+    { href: '#trips', label: t.nav.trips },
+    { href: '#packages', label: t.nav.packages },
+    { href: '#about', label: t.nav.about },
+    { href: '#gallery', label: t.nav.gallery },
+    { href: '#location', label: t.nav.location },
   ];
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -68,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center focus:outline-none"
             aria-label="Droub Camp Home"
           >
-            <Logo size="md" variant="navy" />
+            <Logo size="md" variant="navy" lang={lang} />
           </a>
 
           {/* Desktop Navigation Links */}
@@ -92,11 +92,11 @@ export const Header: React.FC<HeaderProps> = ({
               id="lang-toggle-btn"
               onClick={onToggleLang}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#CBD5E1] bg-white text-xs font-bold font-['Cairo'] text-[#0F223D] hover:bg-[#F1F5F9] transition-colors focus:outline-none shadow-xs"
-              title={lang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
+              title={t.nav.langToggleTitle}
               aria-label="Toggle Language"
             >
               <Globe className="w-3.5 h-3.5 text-[#0F223D]" />
-              <span>{lang === 'ar' ? 'EN' : 'عربي'}</span>
+              <span>{t.nav.langToggle}</span>
             </button>
 
             {/* Prominent On-Site Book Now Button */}
@@ -106,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="inline-flex items-center justify-center gap-2 bg-[#D94E28] hover:bg-[#C2411C] active:scale-95 text-white font-['Cairo'] font-bold text-sm px-4 sm:px-5 py-2.5 rounded-xl shadow-sm hover:shadow transition-all duration-200"
             >
               <Calendar className="w-4 h-4" />
-              <span>{t.bookNow}</span>
+              <span>{t.common.bookNow}</span>
             </button>
 
             {/* Mobile Hamburger Button */}
@@ -138,7 +138,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className="px-4 py-3 rounded-xl text-base font-bold font-['Cairo'] text-[#0F223D] hover:bg-white hover:text-[#D94E28] active:bg-[#E2E8F0] transition-colors flex items-center justify-between"
                 >
                   <span>{link.label}</span>
-                  <span className="text-xs text-[#94A3B8] font-normal">→</span>
+                  <span className="text-xs text-[#94A3B8] font-normal rtl:rotate-180">→</span>
                 </a>
               ))}
             </div>
@@ -153,11 +153,11 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full flex items-center justify-center gap-2.5 bg-[#D94E28] hover:bg-[#C2411C] active:scale-[0.98] text-white font-['Cairo'] font-black text-base py-3.5 px-4 rounded-xl shadow-md transition-all"
               >
                 <Calendar className="w-5 h-5" />
-                <span>{t.bookNow}</span>
+                <span>{t.common.bookNow}</span>
               </button>
 
               <div className="flex items-center justify-between px-2 pt-1 text-xs text-[#64748B] font-['Tajawal']">
-                <span>📍 رأس شيطان، نويبع، جنوب سيناء</span>
+                <span>📍 {t.common.addressShort}</span>
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { RoomPricing, PackageItem, OccupancyType, Language, BookingRequest } from '../types';
 import { WHATSAPP_PHONE_INTERNATIONAL } from '../lib/whatsapp';
+import { translations, translateRoomType, translatePackage } from '../lib/translations';
 import {
   Calendar as CalendarIcon,
   X,
@@ -42,6 +43,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   initialReference = '',
   initialOccupancy = 'double',
 }) => {
+  const t = translations[lang];
+  const tm = t.modal;
+
   const [requestType, setRequestType] = useState<'room' | 'package'>(initialType);
   const [referenceName, setReferenceName] = useState<string>(initialReference);
   const [occupancy, setOccupancy] = useState<OccupancyType>(initialOccupancy);
@@ -229,11 +233,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       } else {
         // Validate no confirmed overlap in between
         if (hasBookedDaysBetween(checkIn, dateStr)) {
-          setSubmitError(
-            lang === 'ar'
-              ? 'تتعارض هذه الفترة مع تواريخ محجوزة مسبقاً. يرجى اختيار فترة متاحة.'
-              : 'This range overlaps with already booked dates. Please choose available dates.'
-          );
+          setSubmitError(tm.errOverlap);
           return;
         }
         setCheckOut(dateStr);
@@ -320,18 +320,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setSubmitError(null);
 
     if (!checkIn || !checkOut) {
-      setSubmitError(
-        lang === 'ar'
-          ? 'يرجى اختيار تاريخ الوصول والمغادرة من التقويم'
-          : 'Please select check-in and check-out dates from the calendar'
-      );
+      setSubmitError(tm.errSelectDates);
       return;
     }
 
     if (!guestName.trim() || !guestPhone.trim()) {
-      setSubmitError(
-        lang === 'ar' ? 'يرجى ملء الاسم الكامل ورقم الهاتف' : 'Please provide your full name and phone number'
-      );
+      setSubmitError(tm.errProvideContact);
       return;
     }
 
@@ -352,7 +346,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         notes: notes.trim() || null,
       };
 
-      const { data, error } = await supabase.from('booking_requests').insert([payload]).select();
+      const { error } = await supabase.from('booking_requests').insert([payload]).select();
 
       if (error) {
         console.error('Supabase booking error:', error);
@@ -375,6 +369,25 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   if (!isOpen) return null;
 
+  const occupancyDisplayMap: Record<OccupancyType, { ar: string; en: string }> = {
+    single: { ar: 'فردي', en: 'Single' },
+    double: { ar: 'مزدوج', en: 'Double' },
+    triple: { ar: 'ثلاثي', en: 'Triple' },
+    quadruple: { ar: 'رباعي', en: 'Quadruple' },
+  };
+
+  const getTranslatedReference = (type: 'room' | 'package', ref: string) => {
+    if (type === 'room') {
+      return translateRoomType(ref, lang);
+    }
+    const pkg = packages.find((p) => p.title === ref);
+    return pkg ? translatePackage(pkg, lang).title : ref;
+  };
+
+  const whatsappMessageText = lang === 'ar'
+    ? `مرحباً دروب كامب، قمت بتقديم طلب حجز عبر الموقع:\n- الإقامة: ${lastSubmittedBooking?.reference_name}\n- الوصول: ${lastSubmittedBooking?.check_in}\n- المغادرة: ${lastSubmittedBooking?.check_out}\n- الاسم: ${lastSubmittedBooking?.guest_name}\n- الهاتف: ${lastSubmittedBooking?.guest_phone}\nأرجو المتابعة والتأكيد.`
+    : `Hello Droub Camp, I submitted a booking request through the website:\n- Selection: ${lastSubmittedBooking?.reference_name}\n- Check-in: ${lastSubmittedBooking?.check_in}\n- Check-out: ${lastSubmittedBooking?.check_out}\n- Name: ${lastSubmittedBooking?.guest_name}\n- Phone: ${lastSubmittedBooking?.guest_phone}\nPlease confirm.`;
+
   return (
     <div
       id="booking-modal-overlay"
@@ -389,12 +402,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </div>
             <div>
               <h2 className="font-['Cairo'] font-black text-lg sm:text-xl text-[#0F223D] leading-tight">
-                {lang === 'ar' ? 'طلب حجز إقامة — دروب كامب' : 'Book Your Stay — Droub Camp'}
+                {tm.title}
               </h2>
               <p className="font-['Tajawal'] text-xs text-[#64748B]">
-                {lang === 'ar'
-                  ? 'رأس شيطان، نويبع • حجز مباشر مع تأكيد المالك'
-                  : 'Ras Shitan, Nuweiba • Direct Booking with Owner Confirmation'}
+                {tm.subtitle}
               </p>
             </div>
           </div>
@@ -417,12 +428,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
               <div>
                 <h3 className="font-['Cairo'] font-black text-2xl text-[#0F223D] mb-1">
-                  {lang === 'ar' ? 'تم استلام طلب حجزك بنجاح!' : 'Booking Request Received!'}
+                  {tm.successTitle}
                 </h3>
                 <p className="font-['Tajawal'] text-sm sm:text-base text-[#475569] max-w-lg mx-auto leading-relaxed">
-                  {lang === 'ar'
-                    ? 'سيقوم مالك الكامب بمراجعة وتأكيد طلبك في أقرب وقت. فور التأكيد، سيُطلب منك سداد عربون 50% عبر إنستاباي لتأكيد الحجز النهائي.'
-                    : 'The camp owner will review and confirm your request shortly. Once confirmed, you will be asked to pay a 50% deposit via InstaPay to secure your booking.'}
+                  {tm.successDesc}
                 </p>
               </div>
 
@@ -430,34 +439,30 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               {lastSubmittedBooking && (
                 <div className="bg-white rounded-2xl p-5 border border-[#E2E8F0] max-w-md mx-auto text-start space-y-2.5 font-['Cairo'] text-xs sm:text-sm">
                   <div className="flex justify-between border-b border-[#F1F5F9] pb-2">
-                    <span className="text-[#64748B]">{lang === 'ar' ? 'نوع الإقامة' : 'Selection'}:</span>
-                    <span className="font-bold text-[#0F223D]">{lastSubmittedBooking.reference_name}</span>
+                    <span className="text-[#64748B]">{tm.selectionLabel}:</span>
+                    <span className="font-bold text-[#0F223D]">
+                      {getTranslatedReference(lastSubmittedBooking.request_type, lastSubmittedBooking.reference_name)}
+                    </span>
                   </div>
                   {lastSubmittedBooking.occupancy && (
                     <div className="flex justify-between border-b border-[#F1F5F9] pb-2">
-                      <span className="text-[#64748B]">{lang === 'ar' ? 'نوع الإشغال' : 'Occupancy'}:</span>
+                      <span className="text-[#64748B]">{tm.occupancyLabel}:</span>
                       <span className="font-bold text-[#D94E28]">
-                        {lastSubmittedBooking.occupancy === 'single'
-                          ? 'فردي (Single)'
-                          : lastSubmittedBooking.occupancy === 'double'
-                          ? 'مزدوج (Double)'
-                          : lastSubmittedBooking.occupancy === 'triple'
-                          ? 'ثلاثي (Triple)'
-                          : 'رباعي (Quadruple)'}
+                        {occupancyDisplayMap[lastSubmittedBooking.occupancy][lang]}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between border-b border-[#F1F5F9] pb-2">
-                    <span className="text-[#64748B]">{lang === 'ar' ? 'تاريخ الوصول' : 'Check-in'}:</span>
+                    <span className="text-[#64748B]">{tm.checkInDate}:</span>
                     <span className="font-bold">{lastSubmittedBooking.check_in}</span>
                   </div>
                   <div className="flex justify-between border-b border-[#F1F5F9] pb-2">
-                    <span className="text-[#64748B]">{lang === 'ar' ? 'تاريخ المغادرة' : 'Check-out'}:</span>
+                    <span className="text-[#64748B]">{tm.checkOutDate}:</span>
                     <span className="font-bold">{lastSubmittedBooking.check_out}</span>
                   </div>
                   {lastSubmittedBooking.total_price && (
                     <div className="flex justify-between pt-1">
-                      <span className="text-[#64748B] font-bold">{lang === 'ar' ? 'إجمالي السعر التقديري' : 'Total Price'}:</span>
+                      <span className="text-[#64748B] font-bold">{tm.totalPriceEstimated}:</span>
                       <span className="font-black text-base text-[#D94E28]">
                         {lastSubmittedBooking.total_price.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
                       </span>
@@ -471,26 +476,22 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <CreditCard className="w-5 h-5 text-[#D94E28] flex-shrink-0 mt-0.5" />
                 <div className="font-['Tajawal'] text-xs text-[#9A3412]">
                   <strong className="font-['Cairo'] block mb-0.5">
-                    {lang === 'ar' ? 'معلومات سداد العربون لاحقاً:' : 'Deposit Payment:'}
+                    {tm.depositNoticeTitle}
                   </strong>
-                  {lang === 'ar'
-                    ? 'عربون 50% عبر تطبيق InstaPay على حساب الكامب (01009124513 - جمال عبدالله عزمي سعفان).'
-                    : '50% deposit via InstaPay to (01009124513 - Gamal Abdalla Azmy Saafan).'}
+                  {tm.depositNoticeDesc}
                 </div>
               </div>
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
                 <a
-                  href={`https://wa.me/${WHATSAPP_PHONE_INTERNATIONAL}?text=${encodeURIComponent(
-                    `مرحباً دروب كامب، قمت بتقديم طلب حجز عبر الموقع:\n- الإقامة: ${lastSubmittedBooking?.reference_name}\n- الوصول: ${lastSubmittedBooking?.check_in}\n- المغادرة: ${lastSubmittedBooking?.check_out}\n- الاسم: ${lastSubmittedBooking?.guest_name}\n- الهاتف: ${lastSubmittedBooking?.guest_phone}\nأرجو المتابعة والتأكيد.`
-                  )}`}
+                  href={`https://wa.me/${WHATSAPP_PHONE_INTERNATIONAL}?text=${encodeURIComponent(whatsappMessageText)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-['Cairo'] font-bold text-sm shadow-md transition-all active:scale-95"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>{lang === 'ar' ? 'متابعة الحجز فوراً عبر واتساب' : 'Follow up via WhatsApp'}</span>
+                  <span>{tm.followUpWhatsApp}</span>
                 </a>
 
                 <button
@@ -498,7 +499,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   onClick={onClose}
                   className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#E2E8F0] hover:bg-[#CBD5E1] text-[#0F223D] font-['Cairo'] font-bold text-sm transition-colors"
                 >
-                  {lang === 'ar' ? 'تم وإغلاق' : 'Close'}
+                  {tm.closeModal}
                 </button>
               </div>
             </div>
@@ -520,7 +521,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   }`}
                 >
                   <Bed className="w-4 h-4 text-[#D94E28]" />
-                  <span>{lang === 'ar' ? 'حجز كوخ / غرفة' : 'Book a Room / Hut'}</span>
+                  <span>{tm.tabRoom}</span>
                 </button>
 
                 <button
@@ -536,7 +537,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   }`}
                 >
                   <Package className="w-4 h-4 text-[#D94E28]" />
-                  <span>{lang === 'ar' ? 'حجز باقة إجازة' : 'Book a Package'}</span>
+                  <span>{tm.tabPackage}</span>
                 </button>
               </div>
 
@@ -544,13 +545,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E2E8F0] space-y-4">
                 <div>
                   <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1.5">
-                    {requestType === 'room'
-                      ? lang === 'ar'
-                        ? 'اختر نوع الغرفة أو الكوخ'
-                        : 'Select Room / Hut Type'
-                      : lang === 'ar'
-                      ? 'اختر الباقة المراد حجزها'
-                      : 'Select Vacation Package'}
+                    {requestType === 'room' ? tm.selectRoomType : tm.selectPackageType}
                   </label>
                   <select
                     value={referenceName}
@@ -560,14 +555,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     {requestType === 'room'
                       ? rooms.map((r) => (
                           <option key={r.room_type} value={r.room_type}>
-                            {r.room_type}
+                            {translateRoomType(r.room_type, lang)}
                           </option>
                         ))
-                      : packages.map((p) => (
-                          <option key={p.title} value={p.title}>
-                            {p.title} — {p.price}
-                          </option>
-                        ))}
+                      : packages.map((p) => {
+                          const tp = translatePackage(p, lang);
+                          return (
+                            <option key={p.title} value={p.title}>
+                              {tp.title} — {tp.priceDisplay}
+                            </option>
+                          );
+                        })}
                   </select>
                 </div>
 
@@ -575,14 +573,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 {requestType === 'room' && (
                   <div>
                     <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-2">
-                      {lang === 'ar' ? 'نوع الإشغال (يتغير السعر بالليلة تلقائياً)' : 'Occupancy (Price per night updates)'}
+                      {tm.occupancyTypeHint}
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {[
-                        { key: 'single', labelAr: 'فردي', labelEn: 'Single', price: selectedRoom?.single_price },
-                        { key: 'double', labelAr: 'مزدوج', labelEn: 'Double', price: selectedRoom?.double_price },
-                        { key: 'triple', labelAr: 'ثلاثي', labelEn: 'Triple', price: selectedRoom?.triple_price },
-                        { key: 'quadruple', labelAr: 'رباعي', labelEn: 'Quad', price: selectedRoom?.quadruple_price },
+                        { key: 'single', label: t.pricing.single, price: selectedRoom?.single_price },
+                        { key: 'double', label: t.pricing.double, price: selectedRoom?.double_price },
+                        { key: 'triple', label: t.pricing.triple, price: selectedRoom?.triple_price },
+                        { key: 'quadruple', label: t.pricing.quadruple, price: selectedRoom?.quadruple_price },
                       ].map((item) => (
                         <button
                           key={item.key}
@@ -595,14 +593,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           }`}
                         >
                           <span className="block text-xs font-['Cairo'] font-bold">
-                            {lang === 'ar' ? item.labelAr : item.labelEn}
+                            {item.label}
                           </span>
                           <span
                             className={`block text-[11px] font-['Cairo'] mt-0.5 ${
                               occupancy === item.key ? 'text-[#F97316]' : 'text-[#64748B]'
                             }`}
                           >
-                            {item.price ? `${item.price} ج.م` : '—'}
+                            {item.price ? `${item.price} ${t.common.currency}` : '—'}
                           </span>
                         </button>
                       ))}
@@ -617,13 +615,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   <div className="flex items-center gap-2">
                     <CalendarIcon className="w-5 h-5 text-[#D94E28]" />
                     <h3 className="font-['Cairo'] font-bold text-sm sm:text-base text-[#0F223D]">
-                      {lang === 'ar' ? 'اختر تواريخ الإقامة (الوصول والمغادرة)' : 'Select Dates (Check-in & Check-out)'}
+                      {tm.selectDatesTitle}
                     </h3>
                   </div>
                   {loadingConfirmed && (
                     <span className="text-[11px] font-['Tajawal'] text-[#64748B] flex items-center gap-1 animate-pulse">
                       <Clock className="w-3.5 h-3.5" />
-                      <span>{lang === 'ar' ? 'فحص التوافر...' : 'Checking availability...'}</span>
+                      <span>{tm.checkingAvailability}</span>
                     </span>
                   )}
                 </div>
@@ -632,18 +630,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#E2E8F0]">
                     <span className="block text-[10px] font-['Cairo'] font-bold text-[#64748B]">
-                      {lang === 'ar' ? 'تاريخ الوصول (Check-in)' : 'Check-in'}
+                      {tm.checkInDate}
                     </span>
                     <span className="font-['Cairo'] font-black text-sm text-[#0F223D]">
-                      {checkIn || (lang === 'ar' ? 'اضغط لاختيار اليوم' : 'Select day')}
+                      {checkIn || tm.clickToPickDay}
                     </span>
                   </div>
                   <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#E2E8F0]">
                     <span className="block text-[10px] font-['Cairo'] font-bold text-[#64748B]">
-                      {lang === 'ar' ? 'تاريخ المغادرة (Check-out)' : 'Check-out'}
+                      {tm.checkOutDate}
                     </span>
                     <span className="font-['Cairo'] font-black text-sm text-[#0F223D]">
-                      {checkOut || (lang === 'ar' ? 'اضغط لاختيار اليوم' : 'Select day')}
+                      {checkOut || tm.clickToPickDay}
                     </span>
                   </div>
                 </div>
@@ -654,15 +652,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     <div className="flex items-center gap-1.5 text-[#0369A1] font-bold">
                       <Bed className="w-4 h-4 text-[#0284C7]" />
                       <span>
-                        {lang === 'ar'
-                          ? `سعة الغرف المتوفرة في الكامب: ${totalUnits} غرف`
-                          : `Total camp capacity for this type: ${totalUnits} units`}
+                        {tm.capacityNotice.replace('{count}', String(totalUnits))}
                       </span>
                     </div>
                     <span className="text-[10px] font-['Tajawal'] text-[#0369A1]/80 hidden sm:inline">
-                      {lang === 'ar'
-                        ? 'تظل الأيام متاحة حتى اكتمال حجز جميع الغرف'
-                        : 'Dates remain open until all units are booked'}
+                      {tm.capacityHint}
                     </span>
                   </div>
                 )}
@@ -746,13 +740,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     }
 
                     const tooltipText = booked
-                      ? lang === 'ar'
-                        ? `مكتمل الحجز بالكامل (${totalUnits}/${totalUnits} غرف محجوزة)`
-                        : `Fully booked (${totalUnits}/${totalUnits} units taken)`
+                      ? tm.fullyBookedDetail.replace(/{count}/g, String(totalUnits))
                       : bookedCount > 0
-                      ? lang === 'ar'
-                        ? `متبقي ${remainingUnits} غرف متاحة من أصل ${totalUnits}`
-                        : `${remainingUnits} of ${totalUnits} units remaining`
+                      ? tm.unitsRemaining.replace('{count}', String(remainingUnits)).replace('{total}', String(totalUnits))
                       : cell.dateStr;
 
                     return (
@@ -767,7 +757,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         <span className="leading-none">{cell.dayNum}</span>
                         {!past && !booked && bookedCount > 0 && (
                           <span className="text-[8px] text-[#D97706] font-bold leading-none mt-0.5">
-                            {remainingUnits} متبقي
+                            {tm.unitsLeft.replace('{count}', String(remainingUnits))}
                           </span>
                         )}
                       </button>
@@ -779,19 +769,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <div className="flex flex-wrap items-center gap-3 pt-2 text-[10px] font-['Tajawal'] text-[#64748B]">
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded bg-[#0F223D]"></span>
-                    <span>{lang === 'ar' ? 'تاريخ محدد' : 'Selected'}</span>
+                    <span>{tm.legendSelected}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded bg-[#FEE2E2] border border-[#FCA5A5]"></span>
-                    <span>{lang === 'ar' ? `مكتمل الحجز (كل الـ ${totalUnits} غرف)` : `Full (${totalUnits} units)`}</span>
+                    <span>{tm.legendFull.replace('{total}', String(totalUnits))}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded bg-[#FFFBEB] border border-[#FDE68A]"></span>
-                    <span>{lang === 'ar' ? 'حجز جزئي (متبقي غرف)' : 'Partially booked'}</span>
+                    <span>{tm.legendPartial}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded bg-[#FAF8F5] border border-[#E2E8F0]"></span>
-                    <span>{lang === 'ar' ? 'متاح بالكامل' : 'Fully Available'}</span>
+                    <span>{tm.legendAvailable}</span>
                   </div>
                 </div>
               </div>
@@ -801,24 +791,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <div>
                   <span className="text-[11px] font-['Tajawal'] text-[#94A3B8] block">
                     {requestType === 'room'
-                      ? lang === 'ar'
-                        ? `${nightsCount} ليالي × ${roomPricePerNight} ج.م / ليلة`
-                        : `${nightsCount} nights × ${roomPricePerNight} EGP / night`
-                      : lang === 'ar'
-                      ? `باقة متكاملة (${guestsCount} أفراد)`
-                      : `Package for (${guestsCount} guests)`}
+                      ? tm.nightsBreakdown
+                          .replace('{nights}', String(nightsCount))
+                          .replace('{price}', String(roomPricePerNight))
+                      : tm.packageBreakdown.replace('{guests}', String(guestsCount))}
                   </span>
                   <div className="font-['Cairo'] font-black text-2xl text-white">
                     {calculatedTotalPrice > 0
                       ? `${calculatedTotalPrice.toLocaleString()} ${lang === 'ar' ? 'ج.م' : 'EGP'}`
-                      : lang === 'ar'
-                      ? 'حدد التواريخ لحساب الإجمالي'
-                      : 'Pick dates to see total'}
+                      : tm.pickDatesToCalc}
                   </div>
                 </div>
 
                 <div className="text-[11px] font-['Tajawal'] text-[#CBD5E1] bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
-                  {lang === 'ar' ? 'شامل الإفطار والعشاء يومياً' : 'Includes Breakfast & Dinner'}
+                  {tm.includesMeals}
                 </div>
               </div>
 
@@ -826,13 +812,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E2E8F0] space-y-4">
                 <h3 className="font-['Cairo'] font-bold text-sm sm:text-base text-[#0F223D] flex items-center gap-2">
                   <User className="w-4 h-4 text-[#D94E28]" />
-                  <span>{lang === 'ar' ? 'بيانات النزيل ومعلومات التواصل' : 'Guest Contact Information'}</span>
+                  <span>{tm.guestInfoTitle}</span>
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                      {lang === 'ar' ? 'الاسم الكامل *' : 'Full Name *'}
+                      {tm.fullName}
                     </label>
                     <div className="relative">
                       <input
@@ -840,7 +826,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         required
                         value={guestName}
                         onChange={(e) => setGuestName(e.target.value)}
-                        placeholder={lang === 'ar' ? 'مثال: أحمد محمد علي' : 'e.g. John Smith'}
+                        placeholder={tm.fullNamePlaceholder}
                         className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm font-['Tajawal'] focus:outline-none focus:ring-2 focus:ring-[#0F223D]"
                       />
                     </div>
@@ -848,7 +834,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
                   <div>
                     <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                      {lang === 'ar' ? 'رقم الهاتف / واتساب *' : 'Phone / WhatsApp *'}
+                      {tm.phoneWhatsApp}
                     </label>
                     <div className="relative">
                       <input
@@ -866,7 +852,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                      {lang === 'ar' ? 'عدد النزلاء (Guests)' : 'Number of Guests'}
+                      {tm.guestsCount}
                     </label>
                     <input
                       type="number"
@@ -880,13 +866,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
                   <div>
                     <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                      {lang === 'ar' ? 'ملاحظات أو رغبات خاصة (اختياري)' : 'Special Requests (Optional)'}
+                      {tm.specialRequests}
                     </label>
                     <input
                       type="text"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder={lang === 'ar' ? 'موعد الوصول المتوقع، مواصلات...' : 'Arrival time, transfer...'}
+                      placeholder={tm.specialRequestsPlaceholder}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm font-['Tajawal'] focus:outline-none focus:ring-2 focus:ring-[#0F223D]"
                     />
                   </div>
@@ -909,18 +895,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   className="w-full py-4 px-6 rounded-2xl bg-[#D94E28] hover:bg-[#C2411C] active:scale-[0.99] text-white font-['Cairo'] font-black text-base shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {submitting ? (
-                    <span>{lang === 'ar' ? 'جاري إرسال طلب الحجز...' : 'Submitting booking...'}</span>
+                    <span>{tm.submitting}</span>
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5" />
-                      <span>{lang === 'ar' ? 'تأكيد وإرسال طلب الحجز' : 'Submit Booking Request'}</span>
+                      <span>{tm.submitBooking}</span>
                     </>
                   )}
                 </button>
                 <p className="font-['Tajawal'] text-center text-xs text-[#64748B] mt-2">
-                  {lang === 'ar'
-                    ? 'سيتم مراجعة الطلب وتأكيده من قبل إدارة الكامب قبل سداد أي مبلغ'
-                    : 'The booking will be reviewed and confirmed by camp management prior to deposit'}
+                  {tm.bookingGuaranteeNote}
                 </p>
               </div>
             </form>
@@ -930,3 +914,4 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     </div>
   );
 };
+
