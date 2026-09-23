@@ -370,10 +370,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   if (!isOpen) return null;
 
   const occupancyDisplayMap: Record<OccupancyType, { ar: string; en: string }> = {
-    single: { ar: 'فردي', en: 'Single' },
-    double: { ar: 'مزدوج', en: 'Double' },
-    triple: { ar: 'ثلاثي', en: 'Triple' },
-    quadruple: { ar: 'رباعي', en: 'Quadruple' },
+    single: { ar: 'فردي (Single)', en: 'Single' },
+    double: { ar: 'مزدوج (Double)', en: 'Double' },
+    triple: { ar: 'ثلاثي (Triple)', en: 'Triple' },
+    quadruple: { ar: 'رباعي (Quadruple)', en: 'Quadruple' },
   };
 
   const getTranslatedReference = (type: 'room' | 'package', ref: string) => {
@@ -558,14 +558,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             {translateRoomType(r.room_type, lang)}
                           </option>
                         ))
-                      : packages.map((p) => {
-                          const tp = translatePackage(p, lang);
-                          return (
-                            <option key={p.title} value={p.title}>
-                              {tp.title} — {tp.priceDisplay}
-                            </option>
-                          );
-                        })}
+                      : packages.map((p) => (
+                          <option key={p.title} value={p.title}>
+                            {translatePackage(p, lang).title} — {p.price}
+                          </option>
+                        ))}
                   </select>
                 </div>
 
@@ -577,10 +574,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {[
-                        { key: 'single', label: t.pricing.single, price: selectedRoom?.single_price },
-                        { key: 'double', label: t.pricing.double, price: selectedRoom?.double_price },
-                        { key: 'triple', label: t.pricing.triple, price: selectedRoom?.triple_price },
-                        { key: 'quadruple', label: t.pricing.quadruple, price: selectedRoom?.quadruple_price },
+                        { key: 'single', label: lang === 'ar' ? 'فردي' : 'Single', price: selectedRoom?.single_price },
+                        { key: 'double', label: lang === 'ar' ? 'مزدوج' : 'Double', price: selectedRoom?.double_price },
+                        { key: 'triple', label: lang === 'ar' ? 'ثلاثي' : 'Triple', price: selectedRoom?.triple_price },
+                        { key: 'quadruple', label: lang === 'ar' ? 'رباعي' : 'Quad', price: selectedRoom?.quadruple_price },
                       ].map((item) => (
                         <button
                           key={item.key}
@@ -600,7 +597,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                               occupancy === item.key ? 'text-[#F97316]' : 'text-[#64748B]'
                             }`}
                           >
-                            {item.price ? `${item.price} ${t.common.currency}` : '—'}
+                            {item.price ? `${item.price} ${lang === 'ar' ? 'ج.م' : 'EGP'}` : '—'}
                           </span>
                         </button>
                       ))}

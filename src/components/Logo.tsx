@@ -51,7 +51,7 @@ export const Logo: React.FC<LogoProps> = ({
             {isAr ? 'دروب كامب' : 'Droub Camp'}
           </span>
           <span className="text-[#D94E28] font-bold text-xs tracking-wider opacity-90 hidden sm:inline">
-            {isAr ? 'رأس شيطان' : 'Ras Shitan'}
+            {isAr ? 'DROUB CAMP' : 'رأس شيطان'}
           </span>
         </div>
         {showSubtext && (

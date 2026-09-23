@@ -46,9 +46,12 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ lang, aboutText }) =
             <h2 className="font-['Cairo'] font-black text-2xl sm:text-3xl md:text-4xl text-[#0F223D] tracking-tight mb-4">
               {t.about.title}
             </h2>
-            <div className="font-['Tajawal'] text-base sm:text-lg text-[#334155] leading-relaxed">
+            <div className="font-['Tajawal'] text-base sm:text-lg text-[#334155] leading-relaxed space-y-4">
               <p>
-                {lang === 'ar' ? (aboutText || t.about.description || t.about.defaultP1) : (t.about.description || t.about.defaultP1)}
+                {aboutText || t.about.defaultP1}
+              </p>
+              <p>
+                {t.about.defaultP2}
               </p>
             </div>
 
@@ -117,10 +120,10 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ lang, aboutText }) =
                 <img src="/logo-emblem.svg" alt="Droub Camp" className="w-full h-full object-contain" />
               </div>
               <span className="font-['Cairo'] font-black text-xs tracking-wider uppercase text-white block">
-                {t.about.brandStampTitle}
+                {lang === 'ar' ? 'دروب كامب' : 'Droub Camp'}
               </span>
               <span className="font-['Tajawal'] text-[10px] text-[#94A3B8] block">
-                {t.about.brandStampSubtitle}
+                {lang === 'ar' ? 'رأس شيطان • نويبع' : 'Ras Shitan • Nuweiba'}
               </span>
             </div>
           </div>

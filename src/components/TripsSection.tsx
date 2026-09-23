@@ -44,7 +44,7 @@ export const TripsSection: React.FC<TripsSectionProps> = ({
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-[#D94E28] flex-shrink-0 mt-0.5" />
               <p className="font-['Tajawal'] text-xs sm:text-sm text-[#334155] leading-relaxed font-medium">
-                {lang === 'ar' ? (tripsIntro || t.trips.defaultDisclaimer) : t.trips.defaultDisclaimer}
+                {tripsIntro || t.trips.defaultDisclaimer}
               </p>
             </div>
           </div>

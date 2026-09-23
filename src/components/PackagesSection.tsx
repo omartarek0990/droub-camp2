@@ -76,7 +76,7 @@ export const PackagesSection: React.FC<PackagesSectionProps> = ({
                         {t.packages.priceLabel}
                       </span>
                       <span className="font-['Cairo'] font-extrabold text-sm sm:text-base text-[#D94E28]">
-                        {translated.priceDisplay}
+                        {pkg.price} {t.common.currency}
                       </span>
                     </div>
                   </div>

@@ -86,11 +86,23 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
           id="hero-main-title"
           className="font-['Cairo'] font-black text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white tracking-tight leading-tight sm:leading-tight mb-4 drop-shadow-md"
         >
-          {t.hero.titlePrefix} <span className="text-[#D94E28]">{t.hero.titleHighlighted}</span>
-          <br />
-          <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] block mt-2">
-            {dynamicTitle}
-          </span>
+          {lang === 'ar' ? (
+            <>
+              دروب كامب <span className="text-[#D94E28]">«DROUB»</span>
+              <br />
+              <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] block mt-2">
+                {dynamicTitle}
+              </span>
+            </>
+          ) : (
+            <>
+              Droub Camp <span className="text-[#D94E28]">«Ras Shitan»</span>
+              <br />
+              <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#F8FAFC] block mt-2">
+                {dynamicTitle}
+              </span>
+            </>
+          )}
         </h1>
 
         {/* Subtitle */}
