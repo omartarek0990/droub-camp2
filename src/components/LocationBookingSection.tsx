@@ -24,6 +24,7 @@ interface LocationBookingSectionProps {
   whatsapp?: string;
   facebookUrl?: string;
   instagramUrl?: string;
+  isLoading?: boolean;
   onOpenBooking?: () => void;
 }
 
@@ -35,6 +36,7 @@ export const LocationBookingSection: React.FC<LocationBookingSectionProps> = ({
   whatsapp = WHATSAPP_PHONE_DISPLAY,
   facebookUrl,
   instagramUrl,
+  isLoading = false,
   onOpenBooking,
 }) => {
   const t = translations[lang];
@@ -122,8 +124,8 @@ export const LocationBookingSection: React.FC<LocationBookingSectionProps> = ({
               </div>
 
               {/* Social Media Links */}
-              {(instagramUrl || facebookUrl) && (
-                <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E2E8F0] flex flex-wrap items-center justify-between gap-3">
+              {instagramUrl || facebookUrl ? (
+                <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E2E8F0] flex flex-wrap items-center justify-between gap-3 min-h-[66px] transition-all">
                   <span className="font-['Cairo'] font-bold text-xs text-[#0F223D]">
                     {t.location.followOfficialChannels}
                   </span>
@@ -152,7 +154,15 @@ export const LocationBookingSection: React.FC<LocationBookingSectionProps> = ({
                     )}
                   </div>
                 </div>
-              )}
+              ) : isLoading ? (
+                <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E2E8F0] flex flex-wrap items-center justify-between gap-3 min-h-[66px] animate-pulse">
+                  <div className="h-4 w-36 bg-[#E2E8F0] rounded-md"></div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-24 bg-[#E2E8F0] rounded-xl"></div>
+                    <div className="h-8 w-24 bg-[#E2E8F0] rounded-xl"></div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
 

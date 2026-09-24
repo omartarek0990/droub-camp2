@@ -36,7 +36,17 @@ function AppContent() {
   const [packages, setPackages] = useState<PackageItem[]>(DEFAULT_PACKAGES);
   const [trips, setTrips] = useState<TripItem[]>(DEFAULT_TRIPS);
   const [gallery, setGallery] = useState<GalleryItem[]>(DEFAULT_GALLERY);
-  const [siteInfo, setSiteInfo] = useState<Record<string, string>>(DEFAULT_SITE_INFO);
+  const [siteInfo, setSiteInfo] = useState<Record<string, string>>(() => {
+    try {
+      const cached = localStorage.getItem('jazz_camp_site_info');
+      if (cached) {
+        return { ...DEFAULT_SITE_INFO, ...JSON.parse(cached) };
+      }
+    } catch {
+      // fallback to DEFAULT_SITE_INFO
+    }
+    return DEFAULT_SITE_INFO;
+  });
   const [loading, setLoading] = useState(true);
 
   // On-Site Booking Modal State
@@ -60,62 +70,47 @@ function AppContent() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Fetch all live data dynamically from Supabase
+  // Fetch all live data dynamically from Supabase in parallel
   const loadSupabaseData = useCallback(async () => {
     try {
-      // 1. Rooms Pricing
-      const { data: roomsData, error: roomsError } = await supabase
-        .from('rooms_pricing')
-        .select('*')
-        .order('display_order', { ascending: true });
+      // Run all queries concurrently in parallel with Promise.all
+      const [roomsRes, packagesRes, tripsRes, galleryRes, infoRes] = await Promise.all([
+        supabase.from('rooms_pricing').select('*').order('display_order', { ascending: true }),
+        supabase.from('packages').select('*').order('display_order', { ascending: true }),
+        supabase.from('trips').select('*').order('display_order', { ascending: true }),
+        supabase.from('gallery').select('*').order('display_order', { ascending: true }),
+        supabase.from('site_info').select('*'),
+      ]);
 
-      if (!roomsError && roomsData && roomsData.length > 0) {
-        setRooms(roomsData);
+      if (!roomsRes.error && roomsRes.data && roomsRes.data.length > 0) {
+        setRooms(roomsRes.data);
       }
 
-      // 2. Packages
-      const { data: packagesData, error: packagesError } = await supabase
-        .from('packages')
-        .select('*')
-        .order('display_order', { ascending: true });
-
-      if (!packagesError && packagesData && packagesData.length > 0) {
-        setPackages(packagesData);
+      if (!packagesRes.error && packagesRes.data && packagesRes.data.length > 0) {
+        setPackages(packagesRes.data);
       }
 
-      // 3. Trips
-      const { data: tripsData, error: tripsError } = await supabase
-        .from('trips')
-        .select('*')
-        .order('display_order', { ascending: true });
-
-      if (!tripsError && tripsData && tripsData.length > 0) {
-        setTrips(tripsData);
+      if (!tripsRes.error && tripsRes.data && tripsRes.data.length > 0) {
+        setTrips(tripsRes.data);
       }
 
-      // 4. Gallery
-      const { data: galleryData, error: galleryError } = await supabase
-        .from('gallery')
-        .select('*')
-        .order('display_order', { ascending: true });
-
-      if (!galleryError && galleryData && galleryData.length > 0) {
-        setGallery(galleryData);
+      if (!galleryRes.error && galleryRes.data && galleryRes.data.length > 0) {
+        setGallery(galleryRes.data);
       }
 
-      // 5. Site Info
-      const { data: infoData, error: infoError } = await supabase
-        .from('site_info')
-        .select('*');
-
-      if (!infoError && infoData && infoData.length > 0) {
+      if (!infoRes.error && infoRes.data && infoRes.data.length > 0) {
         const infoMap: Record<string, string> = { ...DEFAULT_SITE_INFO };
-        infoData.forEach((row: { key: string; value: string }) => {
+        infoRes.data.forEach((row: { key: string; value: string }) => {
           if (row.key) {
             infoMap[row.key] = row.value !== null && row.value !== undefined ? row.value : '';
           }
         });
         setSiteInfo(infoMap);
+        try {
+          localStorage.setItem('jazz_camp_site_info', JSON.stringify(infoMap));
+        } catch {
+          // ignore storage quota issues
+        }
       }
     } catch (err) {
       console.warn('Using default seed data while connecting to Supabase:', err);
@@ -235,6 +230,7 @@ function AppContent() {
         whatsapp={siteInfo.whatsapp}
         facebookUrl={siteInfo.social_facebook_url}
         instagramUrl={siteInfo.social_instagram_url}
+        isLoading={loading}
         onOpenBooking={handleOpenGeneralBooking}
       />
 
