@@ -111,8 +111,8 @@ function AppContent() {
       if (!infoError && infoData && infoData.length > 0) {
         const infoMap: Record<string, string> = { ...DEFAULT_SITE_INFO };
         infoData.forEach((row: { key: string; value: string }) => {
-          if (row.key && row.value) {
-            infoMap[row.key] = row.value;
+          if (row.key) {
+            infoMap[row.key] = row.value !== null && row.value !== undefined ? row.value : '';
           }
         });
         setSiteInfo(infoMap);
@@ -239,7 +239,12 @@ function AppContent() {
       />
 
       {/* 10. Footer (NO owner button or link) */}
-      <Footer lang={lang} />
+      <Footer
+        lang={lang}
+        facebookUrl={siteInfo.social_facebook_url}
+        instagramUrl={siteInfo.social_instagram_url}
+        tiktokUrl={siteInfo.social_tiktok_url}
+      />
 
       {/* 11. Persistent Floating WhatsApp Button (Thumb-Friendly on mobile) */}
       <FloatingWhatsApp lang={lang} />

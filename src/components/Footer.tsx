@@ -7,10 +7,41 @@ import { MapPin, Phone, MessageCircle, Instagram, Facebook, Heart } from 'lucide
 
 interface FooterProps {
   lang: Language;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
 }
 
-export const Footer: React.FC<FooterProps> = ({ lang }) => {
+const TikTokIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    aria-hidden="true"
+  >
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.46V11.8a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-3.04-1.23z" />
+  </svg>
+);
+
+const normalizeUrl = (url?: string): string => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed.replace(/^@/, '')}`;
+};
+
+export const Footer: React.FC<FooterProps> = ({
+  lang,
+  facebookUrl,
+  instagramUrl,
+  tiktokUrl,
+}) => {
   const t = translations[lang];
+
+  const cleanFb = normalizeUrl(facebookUrl);
+  const cleanIg = normalizeUrl(instagramUrl);
+  const cleanTt = normalizeUrl(tiktokUrl);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -31,24 +62,46 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
               {t.footer.desc}
             </p>
             <div className="flex items-center gap-3 pt-2">
-              <a
-                href="https://instagram.com/droub.camp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-[#C13584] flex items-center justify-center text-white transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href="https://facebook.com/droub.camp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-[#1877F2] flex items-center justify-center text-white transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-4 h-4" />
-              </a>
+              {/* Instagram: only render if link exists in site_info */}
+              {cleanIg && (
+                <a
+                  href={cleanIg}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-xl bg-white/10 hover:bg-[#C13584] flex items-center justify-center text-white transition-colors"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
+
+              {/* Facebook: only render if link exists in site_info */}
+              {cleanFb && (
+                <a
+                  href={cleanFb}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-xl bg-white/10 hover:bg-[#1877F2] flex items-center justify-center text-white transition-colors"
+                  aria-label="Facebook"
+                >
+                  <Facebook className="w-4 h-4" />
+                </a>
+              )}
+
+              {/* TikTok: only render if link exists in site_info */}
+              {cleanTt && (
+                <a
+                  href={cleanTt}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-xl bg-white/10 hover:bg-black hover:text-white flex items-center justify-center text-white transition-colors"
+                  aria-label="TikTok"
+                >
+                  <TikTokIcon className="w-4 h-4" />
+                </a>
+              )}
+
+              {/* WhatsApp: direct communication */}
               <a
                 href={`https://wa.me/201061189414`}
                 target="_blank"

@@ -41,6 +41,9 @@ import {
   CreditCard,
   ExternalLink,
   Globe,
+  Facebook,
+  Instagram,
+  Share2,
 } from 'lucide-react';
 
 interface OwnerDashboardProps {
@@ -129,6 +132,23 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   const [editingTrip, setEditingTrip] = useState<TripItem | null>(null);
   const [editingGallery, setEditingGallery] = useState<GalleryItem | null>(null);
   const [editingSiteInfo, setEditingSiteInfo] = useState<SiteInfo | null>(null);
+
+  // Social media links state (social_facebook_url, social_instagram_url, social_tiktok_url)
+  const [socialFacebook, setSocialFacebook] = useState('');
+  const [socialInstagram, setSocialInstagram] = useState('');
+  const [socialTiktok, setSocialTiktok] = useState('');
+  const [isSavingSocial, setIsSavingSocial] = useState(false);
+
+  // Sync social inputs when siteInfoList changes
+  useEffect(() => {
+    const fbItem = siteInfoList.find((i) => i.key === 'social_facebook_url');
+    const igItem = siteInfoList.find((i) => i.key === 'social_instagram_url');
+    const ttItem = siteInfoList.find((i) => i.key === 'social_tiktok_url');
+
+    setSocialFacebook(fbItem ? fbItem.value : (DEFAULT_SITE_INFO.social_facebook_url || ''));
+    setSocialInstagram(igItem ? igItem.value : (DEFAULT_SITE_INFO.social_instagram_url || ''));
+    setSocialTiktok(ttItem ? ttItem.value : (DEFAULT_SITE_INFO.social_tiktok_url || ''));
+  }, [siteInfoList]);
 
   // Uploading state & file input refs
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -706,6 +726,31 @@ For contact & inquiries: 01061189414`;
       fetchAllData();
     } catch (err: any) {
       showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
+    }
+  };
+
+  // SAVE SOCIAL MEDIA LINKS
+  const handleSaveSocialLinks = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSocial(true);
+    try {
+      const updates = [
+        { key: 'social_facebook_url', value: socialFacebook.trim() },
+        { key: 'social_instagram_url', value: socialInstagram.trim() },
+        { key: 'social_tiktok_url', value: socialTiktok.trim() },
+      ];
+
+      const { error } = await supabase
+        .from('site_info')
+        .upsert(updates, { onConflict: 'key' });
+
+      if (error) throw error;
+      showFeedback('success', ta.socialLinksSuccess || (currentLang === 'ar' ? 'تم تحديث روابط التواصل الاجتماعي بنجاح!' : 'Social media links updated successfully!'));
+      await fetchAllData();
+    } catch (err: any) {
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
+    } finally {
+      setIsSavingSocial(false);
     }
   };
 
@@ -1575,6 +1620,108 @@ For contact & inquiries: 01061189414`;
         {/* ======================================================== */}
         {activeTab === 'site_info' && (
           <div>
+            {/* Social Media Links Section */}
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E2E8F0] shadow-sm mb-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-xl bg-[#FFF7ED] flex items-center justify-center text-[#D94E28]">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-['Cairo'] font-bold text-base text-[#0F223D]">
+                    {ta.socialLinksTitle || (currentLang === 'ar' ? 'روابط وسائل التواصل الاجتماعي' : 'Social Media Links')}
+                  </h3>
+                  <p className="font-['Tajawal'] text-xs text-[#64748B]">
+                    {ta.socialLinksSubtitle || (currentLang === 'ar' ? 'إدارة روابط فيسبوك وإنستغرام وتيك توك المعروضة في أسفل الموقع' : 'Manage Facebook, Instagram, and TikTok links displayed in the footer')}
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveSocialLinks} className="space-y-4 pt-3 border-t border-[#F1F5F9]">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Facebook URL */}
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1.5">
+                      <span className="w-5 h-5 rounded-md bg-[#1877F2]/10 text-[#1877F2] flex items-center justify-center">
+                        <Facebook className="w-3.5 h-3.5" />
+                      </span>
+                      <span>{ta.facebookUrlLabel || (currentLang === 'ar' ? 'فيسبوك (Facebook URL)' : 'Facebook URL')}</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={socialFacebook}
+                      onChange={(e) => setSocialFacebook(e.target.value)}
+                      placeholder="https://facebook.com/..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm font-['Tajawal'] focus:outline-none focus:ring-2 focus:ring-[#D94E28]/20 focus:border-[#D94E28] transition-all"
+                    />
+                    <span className="block text-[11px] font-['Tajawal'] text-[#94A3B8] mt-1">
+                      {currentLang === 'ar' ? 'مفتاح: social_facebook_url' : 'Key: social_facebook_url'}
+                    </span>
+                  </div>
+
+                  {/* Instagram URL */}
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1.5">
+                      <span className="w-5 h-5 rounded-md bg-[#C13584]/10 text-[#C13584] flex items-center justify-center">
+                        <Instagram className="w-3.5 h-3.5" />
+                      </span>
+                      <span>{ta.instagramUrlLabel || (currentLang === 'ar' ? 'إنستغرام (Instagram URL)' : 'Instagram URL')}</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={socialInstagram}
+                      onChange={(e) => setSocialInstagram(e.target.value)}
+                      placeholder="https://instagram.com/..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm font-['Tajawal'] focus:outline-none focus:ring-2 focus:ring-[#D94E28]/20 focus:border-[#D94E28] transition-all"
+                    />
+                    <span className="block text-[11px] font-['Tajawal'] text-[#94A3B8] mt-1">
+                      {currentLang === 'ar' ? 'مفتاح: social_instagram_url' : 'Key: social_instagram_url'}
+                    </span>
+                  </div>
+
+                  {/* TikTok URL */}
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1.5">
+                      <span className="w-5 h-5 rounded-md bg-black/10 text-[#0F223D] flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.46V11.8a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-3.04-1.23z" />
+                        </svg>
+                      </span>
+                      <span>{ta.tiktokUrlLabel || (currentLang === 'ar' ? 'تيك توك (TikTok URL)' : 'TikTok URL')}</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={socialTiktok}
+                      onChange={(e) => setSocialTiktok(e.target.value)}
+                      placeholder="https://www.tiktok.com/@..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm font-['Tajawal'] focus:outline-none focus:ring-2 focus:ring-[#D94E28]/20 focus:border-[#D94E28] transition-all"
+                    />
+                    <span className="block text-[11px] font-['Tajawal'] text-[#94A3B8] mt-1">
+                      {currentLang === 'ar' ? 'مفتاح: social_tiktok_url (فارغ = لا تظهر أيقونة)' : 'Key: social_tiktok_url (empty = no icon)'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-end">
+                  <button
+                    type="submit"
+                    disabled={isSavingSocial}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-xs sm:text-sm hover:bg-[#C2411C] active:scale-[0.98] transition-all shadow-sm disabled:opacity-50"
+                  >
+                    {isSavingSocial ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span>
+                      {isSavingSocial
+                        ? (ta.savingSocialLinks || (currentLang === 'ar' ? 'جاري الحفظ...' : 'Saving...'))
+                        : (ta.saveSocialLinks || (currentLang === 'ar' ? 'حفظ روابط التواصل' : 'Save Social Media Links'))}
+                    </span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
