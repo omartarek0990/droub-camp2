@@ -22,8 +22,8 @@ interface LocationBookingSectionProps {
   bookingStep2?: string;
   phone?: string;
   whatsapp?: string;
-  instagram?: string;
-  facebook?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
   onOpenBooking?: () => void;
 }
 
@@ -33,8 +33,8 @@ export const LocationBookingSection: React.FC<LocationBookingSectionProps> = ({
   bookingStep2,
   phone = WHATSAPP_PHONE_DISPLAY,
   whatsapp = WHATSAPP_PHONE_DISPLAY,
-  instagram = 'droub.camp',
-  facebook = 'droub.camp',
+  facebookUrl,
+  instagramUrl,
   onOpenBooking,
 }) => {
   const t = translations[lang];
@@ -122,31 +122,37 @@ export const LocationBookingSection: React.FC<LocationBookingSectionProps> = ({
               </div>
 
               {/* Social Media Links */}
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E2E8F0] flex flex-wrap items-center justify-between gap-3">
-                <span className="font-['Cairo'] font-bold text-xs text-[#0F223D]">
-                  {t.location.followOfficialChannels}
-                </span>
-                <div className="flex items-center gap-2">
-                  <a
-                    href="https://instagram.com/droub.camp"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FBF2EF] text-[#C13584] text-xs font-bold font-['Cairo'] border border-[#E2E8F0] transition-colors"
-                  >
-                    <Instagram className="w-3.5 h-3.5" />
-                    <span>@{instagram}</span>
-                  </a>
-                  <a
-                    href="https://facebook.com/droub.camp"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#EEF4FB] text-[#1877F2] text-xs font-bold font-['Cairo'] border border-[#E2E8F0] transition-colors"
-                  >
-                    <Facebook className="w-3.5 h-3.5" />
-                    <span>{facebook}</span>
-                  </a>
+              {(instagramUrl || facebookUrl) && (
+                <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E2E8F0] flex flex-wrap items-center justify-between gap-3">
+                  <span className="font-['Cairo'] font-bold text-xs text-[#0F223D]">
+                    {t.location.followOfficialChannels}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {instagramUrl && (
+                      <a
+                        href={instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FBF2EF] text-[#C13584] text-xs font-bold font-['Cairo'] border border-[#E2E8F0] transition-colors"
+                      >
+                        <Instagram className="w-3.5 h-3.5" />
+                        <span>Instagram</span>
+                      </a>
+                    )}
+                    {facebookUrl && (
+                      <a
+                        href={facebookUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#EEF4FB] text-[#1877F2] text-xs font-bold font-['Cairo'] border border-[#E2E8F0] transition-colors"
+                      >
+                        <Facebook className="w-3.5 h-3.5" />
+                        <span>Facebook</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 

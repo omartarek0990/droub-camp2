@@ -1746,7 +1746,9 @@ For contact & inquiries: 01061189414`;
             </div>
 
             <div className="space-y-3">
-              {siteInfoList.map((info) => (
+              {siteInfoList
+                .filter((info) => info.key !== 'instagram' && info.key !== 'facebook' && !info.key.startsWith('http'))
+                .map((info) => (
                 <div
                   key={info.id || info.key}
                   className="bg-white rounded-2xl p-4 border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"

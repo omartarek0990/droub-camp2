@@ -233,8 +233,8 @@ function AppContent() {
         bookingStep2={lang === 'ar' ? (siteInfo.booking_step_2_ar || siteInfo.booking_step_2) : (siteInfo.booking_step_2_en || undefined)}
         phone={siteInfo.phone}
         whatsapp={siteInfo.whatsapp}
-        instagram={siteInfo.instagram}
-        facebook={siteInfo.facebook}
+        facebookUrl={siteInfo.social_facebook_url}
+        instagramUrl={siteInfo.social_instagram_url}
         onOpenBooking={handleOpenGeneralBooking}
       />
 
