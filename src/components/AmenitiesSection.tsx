@@ -64,8 +64,8 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ lang }) => {
 
   const transferMsg = encodeURIComponent(
     lang === 'ar'
-      ? 'مرحباً، أود الاستفسار عن مواعيد وأسعار انتقالات دروب كامب'
-      : 'Hello, I would like to inquire about Droub Camp transfer schedules and prices'
+      ? 'مرحباً، أود الاستفسار عن مواعيد وأسعار انتقالات جاز كامب'
+      : 'Hello, I would like to inquire about Jazz Camp transfer schedules and prices'
   );
 
   return (

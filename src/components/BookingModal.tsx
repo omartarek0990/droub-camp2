@@ -370,10 +370,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   if (!isOpen) return null;
 
   const occupancyDisplayMap: Record<OccupancyType, { ar: string; en: string }> = {
-    single: { ar: 'فردي (Single)', en: 'Single' },
-    double: { ar: 'مزدوج (Double)', en: 'Double' },
-    triple: { ar: 'ثلاثي (Triple)', en: 'Triple' },
-    quadruple: { ar: 'رباعي (Quadruple)', en: 'Quadruple' },
+    single: { ar: 'فردي', en: 'Single' },
+    double: { ar: 'مزدوج', en: 'Double' },
+    triple: { ar: 'ثلاثي', en: 'Triple' },
+    quadruple: { ar: 'رباعي', en: 'Quadruple' },
   };
 
   const getTranslatedReference = (type: 'room' | 'package', ref: string) => {
@@ -385,8 +385,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   };
 
   const whatsappMessageText = lang === 'ar'
-    ? `مرحباً دروب كامب، قمت بتقديم طلب حجز عبر الموقع:\n- الإقامة: ${lastSubmittedBooking?.reference_name}\n- الوصول: ${lastSubmittedBooking?.check_in}\n- المغادرة: ${lastSubmittedBooking?.check_out}\n- الاسم: ${lastSubmittedBooking?.guest_name}\n- الهاتف: ${lastSubmittedBooking?.guest_phone}\nأرجو المتابعة والتأكيد.`
-    : `Hello Droub Camp, I submitted a booking request through the website:\n- Selection: ${lastSubmittedBooking?.reference_name}\n- Check-in: ${lastSubmittedBooking?.check_in}\n- Check-out: ${lastSubmittedBooking?.check_out}\n- Name: ${lastSubmittedBooking?.guest_name}\n- Phone: ${lastSubmittedBooking?.guest_phone}\nPlease confirm.`;
+    ? `مرحباً جاز كامب، قمت بتقديم طلب حجز عبر الموقع:\n- الإقامة: ${lastSubmittedBooking?.reference_name}\n- الوصول: ${lastSubmittedBooking?.check_in}\n- المغادرة: ${lastSubmittedBooking?.check_out}\n- الاسم: ${lastSubmittedBooking?.guest_name}\n- الهاتف: ${lastSubmittedBooking?.guest_phone}\nأرجو المتابعة والتأكيد.`
+    : `Hello Jazz Camp, I submitted a booking request through the website:\n- Selection: ${lastSubmittedBooking?.reference_name}\n- Check-in: ${lastSubmittedBooking?.check_in}\n- Check-out: ${lastSubmittedBooking?.check_out}\n- Name: ${lastSubmittedBooking?.guest_name}\n- Phone: ${lastSubmittedBooking?.guest_phone}\nPlease confirm.`;
 
   return (
     <div
@@ -464,7 +464,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     <div className="flex justify-between pt-1">
                       <span className="text-[#64748B] font-bold">{tm.totalPriceEstimated}:</span>
                       <span className="font-black text-base text-[#D94E28]">
-                        {lastSubmittedBooking.total_price.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
+                        {lastSubmittedBooking.total_price.toLocaleString()} {t.common.currency}
                       </span>
                     </div>
                   )}
@@ -597,7 +597,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                               occupancy === item.key ? 'text-[#F97316]' : 'text-[#64748B]'
                             }`}
                           >
-                            {item.price ? `${item.price} ${lang === 'ar' ? 'ج.م' : 'EGP'}` : '—'}
+                            {item.price ? `${item.price} ${t.common.currency}` : '—'}
                           </span>
                         </button>
                       ))}
@@ -795,7 +795,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   </span>
                   <div className="font-['Cairo'] font-black text-2xl text-white">
                     {calculatedTotalPrice > 0
-                      ? `${calculatedTotalPrice.toLocaleString()} ${lang === 'ar' ? 'ج.م' : 'EGP'}`
+                      ? `${calculatedTotalPrice.toLocaleString()} ${t.common.currency}`
                       : tm.pickDatesToCalc}
                   </div>
                 </div>

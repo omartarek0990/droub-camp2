@@ -1,19 +1,22 @@
 import React from 'react';
-import { TripItem, Language } from '../types';
+import { TripItem, Language, ItemPhoto } from '../types';
 import { translations, translateTrip } from '../lib/translations';
 import { buildTripInquiryMessage, openWhatsApp } from '../lib/whatsapp';
-import { Compass, MessageCircle, Info, Mountain, MapPin } from 'lucide-react';
+import { PhotoCarousel } from './PhotoCarousel';
+import { MessageCircle, Info, Mountain } from 'lucide-react';
 
 interface TripsSectionProps {
   trips: TripItem[];
   lang: Language;
   tripsIntro?: string;
+  itemPhotos?: ItemPhoto[];
 }
 
 export const TripsSection: React.FC<TripsSectionProps> = ({
   trips,
   lang,
   tripsIntro,
+  itemPhotos = [],
 }) => {
   const t = translations[lang];
 
@@ -44,7 +47,11 @@ export const TripsSection: React.FC<TripsSectionProps> = ({
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-[#D94E28] flex-shrink-0 mt-0.5" />
               <p className="font-['Tajawal'] text-xs sm:text-sm text-[#334155] leading-relaxed font-medium">
-                {tripsIntro || t.trips.defaultDisclaimer}
+                {lang === 'en'
+                  ? tripsIntro && !/[\u0600-\u06ff]/.test(tripsIntro)
+                    ? tripsIntro
+                    : t.trips.defaultDisclaimer
+                  : tripsIntro || t.trips.defaultDisclaimer}
               </p>
             </div>
           </div>
@@ -54,28 +61,41 @@ export const TripsSection: React.FC<TripsSectionProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {activeTrips.map((trip, index) => {
             const translated = translateTrip(trip, lang);
+
+            // Find all uploaded photos for this trip
+            const customPhotos = (itemPhotos || [])
+              .filter(
+                (p) =>
+                  p.item_type === 'trip' &&
+                  (p.item_key === String(trip.id) || p.item_key === trip.title)
+              )
+              .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+              .map((p) => p.image_url);
+
+            const fallbackImg =
+              trip.image_url ||
+              'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80';
+            const displayPhotos = customPhotos.length > 0 ? customPhotos : [fallbackImg];
+
             return (
               <div
                 key={trip.id || index}
                 className="flex flex-col sm:flex-row rounded-3xl bg-white border border-[#E2E8F0] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
               >
-                {/* Trip Photo (Left or Top depending on responsive) */}
-                <div className="relative w-full sm:w-2/5 min-h-[200px] sm:min-h-full overflow-hidden bg-[#E2E8F0]">
-                  <img
-                    src={trip.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80'}
+                {/* Trip Photo Carousel */}
+                <div className="relative w-full sm:w-2/5 min-h-[220px] sm:min-h-full overflow-hidden bg-[#E2E8F0]">
+                  <PhotoCarousel
+                    photos={displayPhotos}
                     alt={translated.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80';
-                    }}
+                    aspectRatioClass="h-52 sm:h-full min-h-[220px]"
+                    fallbackImage={fallbackImg}
+                    badge={
+                      <div className="bg-[#0F223D]/90 backdrop-blur-md text-white text-[11px] font-['Cairo'] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/20">
+                        <Mountain className="w-3 h-3 text-[#D94E28]" />
+                        <span>{t.trips.guideBadge}</span>
+                      </div>
+                    }
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent sm:hidden"></div>
-                  <div className="absolute top-3 start-3 bg-[#0F223D]/90 backdrop-blur-md text-white text-[11px] font-['Cairo'] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/20">
-                    <Mountain className="w-3 h-3 text-[#D94E28]" />
-                    <span>{t.trips.guideBadge}</span>
-                  </div>
                 </div>
 
                 {/* Trip Details */}
@@ -111,4 +131,3 @@ export const TripsSection: React.FC<TripsSectionProps> = ({
     </section>
   );
 };
-

@@ -1,78 +1,128 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
   <defs>
-    <clipPath id="d-fav-clip">
-      <path d="M 25 30 L 160 30 C 235 30 280 80 280 150 C 280 220 235 270 160 270 L 25 270 Z" />
-    </clipPath>
+    <linearGradient id="jazz-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F3B386"/>
+      <stop offset="45%" stop-color="#EA9F70"/>
+      <stop offset="75%" stop-color="#E18D58"/>
+      <stop offset="100%" stop-color="#D77943"/>
+    </linearGradient>
+    <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
   </defs>
 
-  <g transform="translate(15, 10)">
-    <!-- Inside the D (clipped) -->
-    <g clip-path="url(#d-fav-clip)">
-      <rect x="20" y="25" width="265" height="250" fill="#FFFFFF"/>
-      
-      <!-- Sun -->
-      <circle cx="50" cy="95" r="32" fill="none" stroke="#FBBF24" stroke-width="3.5" stroke-dasharray="8 4"/>
-      <circle cx="50" cy="95" r="22" fill="#FEF3C7" opacity="0.6"/>
+  <!-- Warm Sunset Sky Background -->
+  <rect width="500" height="500" rx="32" fill="url(#jazz-sky)"/>
 
-      <!-- Clouds -->
-      <path d="M 85 65 C 85 58 92 52 100 55 C 104 50 114 50 118 55 C 124 55 128 60 126 67 C 122 69 90 70 85 65 Z" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M 135 60 C 135 55 140 50 146 52 C 150 48 158 48 162 52 C 166 52 170 56 168 62 C 165 64 140 65 135 60 Z" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(0, 15)">
+    <!-- 4-Pointed Star Sparkles -->
+    <!-- Top Sparkle -->
+    <path d="M 215 72 Q 215 82 205 82 Q 215 82 215 92 Q 215 82 225 82 Q 215 82 215 72 Z" fill="#FFFFFF" opacity="0.95"/>
+    <!-- Near Moon Sparkle -->
+    <path d="M 320 108 Q 320 115 313 115 Q 320 115 320 122 Q 320 115 327 115 Q 320 115 320 108 Z" fill="#FFFFFF" opacity="0.9"/>
+    <!-- Left Tree Sparkle -->
+    <path d="M 175 168 Q 175 174 169 174 Q 175 174 175 180 Q 175 174 181 174 Q 175 174 175 168 Z" fill="#FFFFFF" opacity="0.85"/>
+    <!-- Right Sky Sparkle -->
+    <path d="M 338 152 Q 338 157 333 157 Q 338 157 338 162 Q 338 157 343 157 Q 338 157 338 152 Z" fill="#FFFFFF" opacity="0.85"/>
 
-      <!-- Mountain Peaks -->
-      <polygon points="120,70 185,210 55,210" fill="#F8FAFC" stroke="#0F223D" stroke-width="4.5" stroke-linejoin="round"/>
-      <path d="M 120 70 Q 115 130 100 210" stroke="#0F223D" stroke-width="3" fill="none"/>
+    <!-- Crescent Moon -->
+    <path d="M 288 84 C 283 89 281 97 284 105 C 287 113 294 117 302 118 C 298 120 292 120 286 117 C 278 113 274 104 276 95 C 277 90 282 85 288 84 Z" fill="#FFFFFF" opacity="0.95"/>
 
-      <polygon points="75,115 135,220 20,220" fill="#FFFFFF" stroke="#0F223D" stroke-width="4.5" stroke-linejoin="round"/>
-      <path d="M 75 115 Q 70 160 55 220" stroke="#0F223D" stroke-width="3" fill="none"/>
+    <!-- Mountain Peaks -->
+    <!-- Center Left Main Peak -->
+    <polygon points="232,95 292,205 166,205" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <polyline points="232,95 244,140 236,170 252,205" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+    <polyline points="244,140 215,165" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+    <polyline points="236,170 200,190" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+    <polyline points="244,140 270,175" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
 
-      <!-- Right Peak with Campfire -->
-      <polygon points="195,100 260,230 130,230" fill="#FFFFFF" stroke="#0F223D" stroke-width="4.5" stroke-linejoin="round"/>
-      <path d="M 195 100 Q 205 160 215 230" stroke="#0F223D" stroke-width="3" fill="none"/>
+    <!-- Right Peak -->
+    <polygon points="296,128 348,208 248,208" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+    <polyline points="296,128 304,165 316,208" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+    <polyline points="304,165 330,190" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round"/>
 
-      <!-- Campfire / Flame -->
-      <g transform="translate(195, 78)">
-        <line x1="-12" y1="18" x2="12" y2="23" stroke="#0F223D" stroke-width="3.5" stroke-linecap="round"/>
-        <line x1="12" y1="18" x2="-12" y2="23" stroke="#0F223D" stroke-width="3.5" stroke-linecap="round"/>
-        <path d="M 0 16 C -8 10 -6 0 0 -8 C 6 0 8 10 0 16 Z" fill="#D94E28" stroke="#D94E28" stroke-width="2"/>
-        <path d="M 0 14 C -4 9 -3 3 0 -2 C 3 3 4 9 0 14 Z" fill="#FBBF24"/>
-      </g>
+    <!-- Left Smaller Peak Behind -->
+    <polygon points="198,135 240,205 152,205" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
 
-      <!-- Trees -->
-      <g transform="translate(45, 185)">
-        <line x1="0" y1="0" x2="0" y2="35" stroke="#0F223D" stroke-width="3"/>
-        <path d="M 0 -5 L -9 8 L -4 8 L -11 20 L 11 20 L 4 8 L 9 8 Z" fill="#15803D" stroke="#0F223D" stroke-width="2.5" stroke-linejoin="round"/>
-      </g>
-      <g transform="translate(68, 182)">
-        <line x1="0" y1="0" x2="0" y2="38" stroke="#0F223D" stroke-width="3"/>
-        <path d="M 0 -6 L -10 8 L -5 8 L -12 21 L 12 21 L 5 8 L 10 8 Z" fill="#15803D" stroke="#0F223D" stroke-width="2.5" stroke-linejoin="round"/>
-      </g>
-      <g transform="translate(90, 185)">
-        <line x1="0" y1="0" x2="0" y2="35" stroke="#0F223D" stroke-width="3"/>
-        <path d="M 0 -5 L -9 8 L -4 8 L -11 20 L 11 20 L 4 8 L 9 8 Z" fill="#15803D" stroke="#0F223D" stroke-width="2.5" stroke-linejoin="round"/>
-      </g>
-
-      <!-- Tent -->
-      <g transform="translate(180, 195)">
-        <polygon points="0,0 -24,30 24,30" fill="#FFFFFF" stroke="#0F223D" stroke-width="3.5" stroke-linejoin="round"/>
-        <line x1="0" y1="0" x2="0" y2="30" stroke="#0F223D" stroke-width="2.5"/>
-        <line x1="0" y1="0" x2="0" y2="-10" stroke="#0F223D" stroke-width="2"/>
-        <polygon points="0,-10 8,-7 0,-4" fill="#D94E28"/>
-      </g>
-
-      <!-- Water Waves -->
-      <g stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-        <path d="M 20 230 L 35 224 L 50 230 L 65 224 L 80 230 L 95 224 L 110 230 L 125 224 L 140 230 L 155 224 L 170 230 L 185 224 L 200 230 L 215 224 L 230 230 L 245 224 L 260 230 L 275 224" />
-        <path d="M 20 242 L 35 236 L 50 242 L 65 236 L 80 242 L 95 236 L 110 242 L 125 236 L 140 242 L 155 236 L 170 242 L 185 236 L 200 242 L 215 236 L 230 242 L 245 236 L 260 242 L 275 236" />
-        <path d="M 20 254 L 35 248 L 50 254 L 65 248 L 80 254 L 95 248 L 110 254 L 125 248 L 140 254 L 155 248 L 170 254 L 185 248 L 200 254 L 215 248 L 230 254 L 245 248 L 260 254 L 275 248" />
-      </g>
+    <!-- Trees on Left -->
+    <!-- Tree 1 -->
+    <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round">
+      <line x1="160" y1="185" x2="160" y2="216"/>
+      <line x1="160" y1="190" x2="151" y2="198"/>
+      <line x1="160" y1="190" x2="169" y2="198"/>
+      <line x1="160" y1="198" x2="148" y2="208"/>
+      <line x1="160" y1="198" x2="172" y2="208"/>
+    </g>
+    <!-- Tree 2 -->
+    <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round">
+      <line x1="184" y1="175" x2="184" y2="214"/>
+      <line x1="184" y1="181" x2="176" y2="189"/>
+      <line x1="184" y1="181" x2="192" y2="189"/>
+      <line x1="184" y1="190" x2="173" y2="200"/>
+      <line x1="184" y1="190" x2="195" y2="200"/>
+      <line x1="184" y1="200" x2="171" y2="211"/>
+      <line x1="184" y1="200" x2="197" y2="211"/>
     </g>
 
-    <!-- Outer 'D' Line -->
-    <path d="M 25 30 L 160 30 C 235 30 280 80 280 150 C 280 220 235 270 160 270 L 25 270 Z" 
-          fill="none" 
-          stroke="#0F223D" 
-          stroke-width="7" 
-          stroke-linejoin="round" 
-          stroke-linecap="round"/>
+    <!-- Trees on Right -->
+    <!-- Tree 3 -->
+    <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round">
+      <line x1="334" y1="172" x2="334" y2="212"/>
+      <line x1="334" y1="178" x2="326" y2="186"/>
+      <line x1="334" y1="178" x2="342" y2="186"/>
+      <line x1="334" y1="188" x2="323" y2="198"/>
+      <line x1="334" y1="188" x2="345" y2="198"/>
+      <line x1="334" y1="198" x2="321" y2="209"/>
+      <line x1="334" y1="198" x2="347" y2="209"/>
+    </g>
+    <!-- Tree 4 -->
+    <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round">
+      <line x1="352" y1="186" x2="352" y2="216"/>
+      <line x1="352" y1="192" x2="344" y2="200"/>
+      <line x1="352" y1="192" x2="360" y2="200"/>
+      <line x1="352" y1="200" x2="341" y2="209"/>
+      <line x1="352" y1="200" x2="363" y2="209"/>
+    </g>
+
+    <!-- Camping Tent -->
+    <polygon points="274,185 298,214 250,214" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="2.5" stroke-linejoin="round"/>
+    <line x1="274" y1="185" x2="274" y2="214" stroke="#FFFFFF" stroke-width="2"/>
+    <polygon points="288,198 318,214 298,214" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linejoin="round"/>
+
+    <!-- Bird in Flight -->
+    <g fill="#1A1817" stroke="#FFFFFF" stroke-width="1.8" stroke-linejoin="round">
+      <!-- Left Wing -->
+      <path d="M 235 198 Q 212 178 190 170 Q 215 186 226 200 Z" fill="#2E2825"/>
+      <!-- Right Wing -->
+      <path d="M 235 198 Q 248 185 264 180 Q 252 195 238 202 Z" fill="#2E2825"/>
+      <!-- Body & Tail -->
+      <path d="M 226 200 Q 235 203 242 201 Q 234 205 229 207 Z" fill="#FFFFFF"/>
+    </g>
+
+    <!-- Horizon / Water Ripples -->
+    <path d="M 148 214 Q 200 216 250 214 Q 300 216 352 214" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M 188 222 Q 250 225 312 222" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+    <path d="M 225 230 Q 250 232 275 230" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- "JAZZ" Bold Display Letters -->
+    <g fill="#FFFFFF">
+      <!-- 'J' -->
+      <path d="M 145 258 L 175 258 L 175 348 C 175 365 168 376 154 382 C 140 388 122 386 108 378 L 115 352 C 122 357 132 360 138 358 C 144 356 146 350 146 342 L 146 258 Z"/>
+      <!-- 'A' -->
+      <path d="M 206 256 L 235 256 L 260 380 L 230 380 L 224 350 L 194 350 L 188 380 L 160 380 Z M 200 326 L 218 326 L 210 286 Z"/>
+      <!-- 'Z' 1 -->
+      <path d="M 264 258 L 322 258 L 322 284 L 285 352 L 325 352 L 322 380 L 262 380 L 262 354 L 299 286 L 264 286 Z"/>
+      <!-- 'Z' 2 -->
+      <path d="M 334 258 L 392 258 L 392 284 L 355 352 L 395 352 L 392 380 L 332 380 L 332 354 L 369 286 L 334 286 Z"/>
+    </g>
+
+    <!-- "camp" Handwritten Cursive Script -->
+    <path d="M 172 432 C 166 430 162 422 165 413 C 168 404 178 400 188 403 C 195 405 199 411 199 416 L 191 418 C 190 414 186 410 181 409 C 175 407 171 411 170 415 C 168 420 171 424 176 425 C 182 426 188 422 191 419 L 195 423 C 190 428 181 432 172 432 Z" fill="#FFFFFF"/>
+    <path d="M 200 428 L 208 405 L 215 405 L 214 412 C 217 406 223 403 229 405 C 235 407 238 413 236 420 C 234 427 227 431 221 429 C 216 428 213 424 212 420 L 210 428 Z M 218 422 C 222 423 227 420 228 415 C 229 411 227 408 223 407 C 219 406 215 410 214 415 C 213 419 215 421 218 422 Z" fill="#FFFFFF"/>
+    <path d="M 242 428 L 249 405 L 256 405 L 254 413 C 257 407 263 404 268 406 C 273 408 274 413 273 418 C 276 411 282 406 288 408 C 294 410 295 416 293 422 L 291 428 L 283 428 L 285 422 C 286 418 285 414 281 413 C 277 412 274 415 273 420 L 270 428 L 263 428 L 265 422 C 266 418 265 414 261 413 C 257 412 254 416 253 421 L 250 428 Z" fill="#FFFFFF"/>
+    <path d="M 298 448 L 308 405 L 315 405 L 314 412 C 318 406 324 403 331 405 C 337 407 340 414 338 421 C 335 429 328 433 321 430 C 317 429 314 424 313 420 L 305 448 Z M 320 423 C 324 424 329 421 330 416 C 331 411 329 408 325 407 C 321 406 317 409 316 415 C 315 419 317 422 320 423 Z" fill="#FFFFFF"/>
+    <!-- Elegant underline tail on camp -->
+    <path d="M 338 421 C 344 422 355 420 365 416" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
   </g>
 </svg>

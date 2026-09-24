@@ -11,8 +11,8 @@ export const FloatingWhatsApp: React.FC<FloatingWhatsAppProps> = ({ lang }) => {
   const t = translations[lang];
   const defaultMessage =
     lang === 'ar'
-      ? 'مرحباً دروب كامب 🌊، أود الاستفسار عن حجز إقامة في رأس شيطان.'
-      : 'Hello Droub Camp 🌊, I would like to inquire about booking a stay.';
+      ? 'مرحباً جاز كامب 🌊، أود الاستفسار عن حجز إقامة في رأس شيطان.'
+      : 'Hello Jazz Camp 🌊, I would like to inquire about booking a stay.';
 
   const whatsappUrl = getWhatsAppUrl(defaultMessage);
 

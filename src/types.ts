@@ -1,6 +1,7 @@
 export interface RoomPricing {
   id?: string | number;
   room_type: string;
+  temp_key?: string;
   single_price: number | string | null;
   double_price: number | string | null;
   triple_price: number | string | null;
@@ -14,6 +15,7 @@ export interface RoomPricing {
 export interface PackageItem {
   id?: string | number;
   title: string;
+  temp_key?: string;
   description: string;
   price: number | string;
   image_url: string;
@@ -25,6 +27,7 @@ export interface PackageItem {
 export interface TripItem {
   id?: string | number;
   title: string;
+  temp_key?: string;
   description: string;
   image_url: string;
   is_active?: boolean;
@@ -59,6 +62,15 @@ export interface BookingRequest {
   total_price?: number | null;
   status: 'pending' | 'confirmed' | 'cancelled';
   notes?: string | null;
+  created_at?: string;
+}
+
+export interface ItemPhoto {
+  id: string;
+  item_type: 'room' | 'package' | 'trip';
+  item_key: string;
+  image_url: string;
+  display_order?: number;
   created_at?: string;
 }
 

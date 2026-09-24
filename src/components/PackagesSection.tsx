@@ -1,17 +1,20 @@
 import React from 'react';
-import { PackageItem, Language } from '../types';
-import { translations, translatePackage } from '../lib/translations';
+import { PackageItem, Language, ItemPhoto } from '../types';
+import { translations, translatePackage, translatePackagePrice } from '../lib/translations';
+import { PhotoCarousel } from './PhotoCarousel';
 import { Sparkles, Calendar, Tag } from 'lucide-react';
 
 interface PackagesSectionProps {
   packages: PackageItem[];
   lang: Language;
+  itemPhotos?: ItemPhoto[];
   onOpenBooking: (packageTitle: string) => void;
 }
 
 export const PackagesSection: React.FC<PackagesSectionProps> = ({
   packages,
   lang,
+  itemPhotos = [],
   onOpenBooking,
 }) => {
   const t = translations[lang];
@@ -42,45 +45,52 @@ export const PackagesSection: React.FC<PackagesSectionProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {activePackages.map((pkg, index) => {
             const translated = translatePackage(pkg, lang);
+
+            // Find all uploaded photos for this package
+            const customPhotos = (itemPhotos || [])
+              .filter(
+                (p) =>
+                  p.item_type === 'package' &&
+                  (p.item_key === String(pkg.id) || p.item_key === pkg.title)
+              )
+              .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+              .map((p) => p.image_url);
+
+            const fallbackImg =
+              pkg.image_url ||
+              'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1000&q=80';
+            const displayPhotos = customPhotos.length > 0 ? customPhotos : [fallbackImg];
+
             return (
               <div
                 key={pkg.id || index}
                 className="flex flex-col rounded-3xl bg-white border border-[#E2E8F0] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
               >
-                {/* Package Image */}
-                <div className="relative h-52 sm:h-56 w-full overflow-hidden bg-[#E2E8F0]">
-                  <img
-                    src={pkg.image_url || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1000&q=80'}
-                    alt={translated.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1000&q=80';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-
-                  {/* Category Pill */}
-                  {translated.category && (
-                    <span className="absolute top-3 end-3 bg-[#D94E28] text-white text-xs font-['Cairo'] font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
-                      <Tag className="w-3 h-3" />
-                      <span>{translated.category}</span>
-                    </span>
-                  )}
-
-                  {/* Price Tag Overlay */}
-                  <div className="absolute bottom-3 start-4">
-                    <div className="bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/40 shadow-md">
+                {/* Photo Carousel */}
+                <PhotoCarousel
+                  photos={displayPhotos}
+                  alt={translated.title}
+                  aspectRatioClass="h-52 sm:h-56"
+                  fallbackImage={fallbackImg}
+                  badge={
+                    translated.category ? (
+                      <span className="bg-[#D94E28] text-white text-xs font-['Cairo'] font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
+                        <Tag className="w-3 h-3" />
+                        <span>{translated.category}</span>
+                      </span>
+                    ) : undefined
+                  }
+                  overlayContent={
+                    <div className="inline-block bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/40 shadow-md">
                       <span className="text-[10px] text-[#64748B] font-['Cairo'] block leading-none">
                         {t.packages.priceLabel}
                       </span>
                       <span className="font-['Cairo'] font-extrabold text-sm sm:text-base text-[#D94E28]">
-                        {pkg.price} {t.common.currency}
+                        {translatePackagePrice(pkg.price, lang)}
                       </span>
                     </div>
-                  </div>
-                </div>
+                  }
+                />
 
                 {/* Card Body */}
                 <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
@@ -110,4 +120,3 @@ export const PackagesSection: React.FC<PackagesSectionProps> = ({
     </section>
   );
 };
-

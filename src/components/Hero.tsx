@@ -19,24 +19,37 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
     }
   };
 
-  const dynamicTitle =
-    lang === 'ar'
-      ? siteInfo?.hero_title_ar || t.hero.defaultTitle
-      : siteInfo?.hero_title_en || t.hero.defaultTitle;
+  const resolveBilingual = (arVal?: string, enVal?: string, legacyVal?: string, fallback = '') => {
+    if (lang === 'ar') return arVal || legacyVal || fallback;
+    if (enVal) return enVal;
+    if (legacyVal && !/[\u0600-\u06ff]/.test(legacyVal)) return legacyVal;
+    return fallback;
+  };
 
-  const dynamicSubtitle =
-    lang === 'ar'
-      ? siteInfo?.hero_subheadline_ar || t.hero.defaultSubtitle
-      : siteInfo?.hero_subheadline_en || t.hero.defaultSubtitle;
+  const dynamicTitle = resolveBilingual(
+    siteInfo?.hero_title_ar,
+    siteInfo?.hero_title_en,
+    siteInfo?.hero_title,
+    t.hero.defaultTitle
+  );
+
+  const dynamicSubtitle = resolveBilingual(
+    siteInfo?.hero_subheadline_ar,
+    siteInfo?.hero_subheadline_en,
+    siteInfo?.hero_subheadline,
+    t.hero.defaultSubtitle
+  );
 
   const dynamicHeroImg =
     siteInfo?.hero_image_url ||
     'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=75';
 
-  const locationText =
-    lang === 'ar'
-      ? siteInfo?.location_name_ar || t.hero.brandEmblemBadge
-      : siteInfo?.location_name_en || t.hero.brandEmblemBadge;
+  const locationText = resolveBilingual(
+    siteInfo?.location_name_ar,
+    siteInfo?.location_name_en,
+    siteInfo?.location_name,
+    t.hero.brandEmblemBadge
+  );
 
   return (
     <section
@@ -88,7 +101,7 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
         >
           {lang === 'ar' ? (
             <>
-              دروب كامب <span className="text-[#D94E28]">«DROUB»</span>
+              جاز كامب <span className="text-[#D94E28]">«JAZZ»</span>
               <br />
               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] block mt-2">
                 {dynamicTitle}
@@ -96,7 +109,7 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
             </>
           ) : (
             <>
-              Droub Camp <span className="text-[#D94E28]">«Ras Shitan»</span>
+              Jazz Camp <span className="text-[#D94E28]">«Ras Shitan»</span>
               <br />
               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#F8FAFC] block mt-2">
                 {dynamicTitle}

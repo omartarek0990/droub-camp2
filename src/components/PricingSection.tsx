@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { RoomPricing, Language, OccupancyType } from '../types';
+import { RoomPricing, Language, OccupancyType, ItemPhoto } from '../types';
 import { translations, translateRoomType } from '../lib/translations';
+import { PhotoCarousel } from './PhotoCarousel';
 import { BedDouble, Users, Sparkles, Check, Info, Calendar } from 'lucide-react';
 
 interface PricingSectionProps {
   rooms: RoomPricing[];
   lang: Language;
   pricingNote?: string;
+  itemPhotos?: ItemPhoto[];
   onOpenBooking: (roomType: string, occupancy: OccupancyType) => void;
 }
 
@@ -14,31 +16,44 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
   rooms,
   lang,
   pricingNote,
+  itemPhotos = [],
   onOpenBooking,
 }) => {
   const t = translations[lang];
   const [selectedOccupancy, setSelectedOccupancy] = useState<'all' | OccupancyType>('all');
 
-  // Representative room imagery and feature tags for Droub Camp accommodations
+  // Representative room imagery and feature tags for Jazz Camp accommodations
   const getRoomMeta = (roomType: string) => {
     const lower = roomType.toLowerCase();
     if (lower.includes('ديلوكس') || lower.includes('deluxe') || lower.includes('seaview')) {
       return {
-        image: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=800&q=80',
+        defaultPhotos: [
+          'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+        ],
         badge: t.pricing.deluxeBadge,
         features: t.pricing.deluxeFeatures,
         idealFor: t.pricing.deluxeIdealFor,
       };
     } else if (lower.includes('مميز') || lower.includes('special')) {
       return {
-        image: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=80',
+        defaultPhotos: [
+          'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+        ],
         badge: t.pricing.specialBadge,
         features: t.pricing.specialFeatures,
         idealFor: t.pricing.specialIdealFor,
       };
     } else {
       return {
-        image: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=800&q=80',
+        defaultPhotos: [
+          'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1519046904884-53103b34b271?auto=format&fit=crop&w=800&q=80',
+        ],
         badge: t.pricing.classicBadge,
         features: t.pricing.classicFeatures,
         idealFor: t.pricing.classicIdealFor,
@@ -64,7 +79,13 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
           {/* Pricing Note Callout */}
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-[#166534] text-xs sm:text-sm font-semibold font-['Tajawal']">
             <Info className="w-4 h-4 text-[#16a34a] flex-shrink-0" />
-            <span>{pricingNote || t.pricing.note}</span>
+            <span>
+              {lang === 'en'
+                ? pricingNote && !/[\u0600-\u06ff]/.test(pricingNote)
+                  ? pricingNote
+                  : t.pricing.note
+                : pricingNote || t.pricing.note}
+            </span>
           </div>
         </div>
 
@@ -72,53 +93,53 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
         <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-8 overflow-x-auto pb-2 px-2 no-scrollbar">
           <button
             onClick={() => setSelectedOccupancy('all')}
-            className={`px-3.5 py-2 rounded-xl font-['Cairo'] text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-['Cairo'] font-bold transition-all whitespace-nowrap ${
               selectedOccupancy === 'all'
                 ? 'bg-[#0F223D] text-white shadow-sm'
-                : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]'
+                : 'bg-white text-[#64748B] border border-[#CBD5E1] hover:border-[#0F223D]'
             }`}
           >
             {t.pricing.allOccupancies}
           </button>
           <button
             onClick={() => setSelectedOccupancy('single')}
-            className={`px-3.5 py-2 rounded-xl font-['Cairo'] text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-['Cairo'] font-bold transition-all whitespace-nowrap ${
               selectedOccupancy === 'single'
                 ? 'bg-[#0F223D] text-white shadow-sm'
-                : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]'
+                : 'bg-white text-[#64748B] border border-[#CBD5E1] hover:border-[#0F223D]'
             }`}
           >
-            {t.pricing.singleWithCount}
+            {t.pricing.single}
           </button>
           <button
             onClick={() => setSelectedOccupancy('double')}
-            className={`px-3.5 py-2 rounded-xl font-['Cairo'] text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-['Cairo'] font-bold transition-all whitespace-nowrap ${
               selectedOccupancy === 'double'
                 ? 'bg-[#0F223D] text-white shadow-sm'
-                : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]'
+                : 'bg-white text-[#64748B] border border-[#CBD5E1] hover:border-[#0F223D]'
             }`}
           >
-            {t.pricing.doubleWithCount}
+            {t.pricing.double}
           </button>
           <button
             onClick={() => setSelectedOccupancy('triple')}
-            className={`px-3.5 py-2 rounded-xl font-['Cairo'] text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-['Cairo'] font-bold transition-all whitespace-nowrap ${
               selectedOccupancy === 'triple'
                 ? 'bg-[#0F223D] text-white shadow-sm'
-                : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]'
+                : 'bg-white text-[#64748B] border border-[#CBD5E1] hover:border-[#0F223D]'
             }`}
           >
-            {t.pricing.tripleWithCount}
+            {t.pricing.triple}
           </button>
           <button
             onClick={() => setSelectedOccupancy('quadruple')}
-            className={`px-3.5 py-2 rounded-xl font-['Cairo'] text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-['Cairo'] font-bold transition-all whitespace-nowrap ${
               selectedOccupancy === 'quadruple'
                 ? 'bg-[#0F223D] text-white shadow-sm'
-                : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]'
+                : 'bg-white text-[#64748B] border border-[#CBD5E1] hover:border-[#0F223D]'
             }`}
           >
-            {t.pricing.quadrupleWithCount}
+            {t.pricing.quadruple}
           </button>
         </div>
 
@@ -129,6 +150,18 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
             const isDeluxe = room.room_type.includes('ديلوكس') || room.room_type.includes('Deluxe');
             const translatedTitle = translateRoomType(room.room_type, lang);
 
+            // Find all photos uploaded for this room
+            const customPhotos = (itemPhotos || [])
+              .filter(
+                (p) =>
+                  p.item_type === 'room' &&
+                  (p.item_key === room.room_type || p.item_key === String(room.id))
+              )
+              .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+              .map((p) => p.image_url);
+
+            const displayPhotos = customPhotos.length > 0 ? customPhotos : meta.defaultPhotos;
+
             return (
               <div
                 key={room.id || index}
@@ -136,28 +169,22 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                   isDeluxe ? 'border-[#0F223D]/30 ring-1 ring-[#0F223D]/10' : 'border-[#E2E8F0]'
                 }`}
               >
-                {/* Room Image Container */}
-                <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-[#E2E8F0]">
-                  <img
-                    src={meta.image}
-                    alt={translatedTitle}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-
-                  {/* Room Category Badge */}
-                  <span className="absolute top-3 end-3 bg-[#0F223D]/85 backdrop-blur-md text-white text-xs font-['Cairo'] font-bold px-3 py-1 rounded-full border border-white/20">
-                    {meta.badge}
-                  </span>
-
-                  {/* Room Title on Image Bottom */}
-                  <div className="absolute bottom-3 start-4 end-4">
+                {/* Multi-Photo Carousel */}
+                <PhotoCarousel
+                  photos={displayPhotos}
+                  alt={translatedTitle}
+                  aspectRatioClass="h-52 sm:h-56"
+                  badge={
+                    <span className="bg-[#0F223D]/85 backdrop-blur-md text-white text-xs font-['Cairo'] font-bold px-3 py-1 rounded-full border border-white/20">
+                      {meta.badge}
+                    </span>
+                  }
+                  overlayContent={
                     <h3 className="font-['Cairo'] font-black text-lg sm:text-xl text-white drop-shadow-md">
                       {translatedTitle}
                     </h3>
-                  </div>
-                </div>
+                  }
+                />
 
                 {/* Card Body */}
                 <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
@@ -192,7 +219,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                         }`}>
                           <div className="text-[11px] text-[#64748B] font-['Tajawal']">{t.pricing.singleWithCount}</div>
                           <div className="font-['Cairo'] font-extrabold text-sm sm:text-base text-[#0F223D]">
-                            {room.single_price ? `${room.single_price} ${t.common.currency}` : '—'}
+                            {room.single_price ? `${room.single_price} ${t.common.currency}` : (lang === 'ar' ? 'عند الطلب' : 'Upon Request')}
                           </div>
                         </div>
                       )}
@@ -203,8 +230,8 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                           selectedOccupancy === 'double' ? 'bg-[#FFF7ED] border-[#FDBA74]' : 'bg-[#FAF8F5] border-[#E2E8F0]'
                         }`}>
                           <div className="text-[11px] text-[#64748B] font-['Tajawal']">{t.pricing.doubleWithCount}</div>
-                          <div className="font-['Cairo'] font-extrabold text-sm sm:text-base text-[#D94E28]">
-                            {room.double_price ? `${room.double_price} ${t.common.currency}` : '—'}
+                          <div className="font-['Cairo'] font-extrabold text-sm sm:text-base text-[#0F223D]">
+                            {room.double_price ? `${room.double_price} ${t.common.currency}` : (lang === 'ar' ? 'عند الطلب' : 'Upon Request')}
                           </div>
                         </div>
                       )}
@@ -216,7 +243,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                         }`}>
                           <div className="text-[11px] text-[#64748B] font-['Tajawal']">{t.pricing.tripleWithCount}</div>
                           <div className="font-['Cairo'] font-extrabold text-sm sm:text-base text-[#0F223D]">
-                            {room.triple_price ? `${room.triple_price} ${t.common.currency}` : '—'}
+                            {room.triple_price ? `${room.triple_price} ${t.common.currency}` : (lang === 'ar' ? 'عند الطلب' : 'Upon Request')}
                           </div>
                         </div>
                       )}
@@ -228,24 +255,23 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                         }`}>
                           <div className="text-[11px] text-[#64748B] font-['Tajawal']">{t.pricing.quadrupleWithCount}</div>
                           <div className="font-['Cairo'] font-extrabold text-sm sm:text-base text-[#0F223D]">
-                            {room.quadruple_price ? `${room.quadruple_price} ${t.common.currency}` : '—'}
+                            {room.quadruple_price ? `${room.quadruple_price} ${t.common.currency}` : (lang === 'ar' ? 'عند الطلب' : 'Upon Request')}
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* REAL ON-SITE BOOKING BUTTON */}
-                  <button
-                    onClick={() => {
-                      const occToUse = selectedOccupancy === 'all' ? 'double' : selectedOccupancy;
-                      onOpenBooking(room.room_type, occToUse);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 bg-[#D94E28] hover:bg-[#C2411C] active:scale-[0.98] text-white font-['Cairo'] font-bold text-sm py-3.5 px-4 rounded-xl shadow-md transition-all duration-200"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    <span>{t.pricing.bookNowCheckDates}</span>
-                  </button>
+                  {/* On-Site Booking Action */}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => onOpenBooking(room.room_type, selectedOccupancy === 'all' ? 'double' : selectedOccupancy)}
+                      className="w-full flex items-center justify-center gap-2 bg-[#D94E28] hover:bg-[#C2411C] active:scale-[0.98] text-white font-['Cairo'] font-bold text-sm py-3 px-4 rounded-xl shadow-md transition-all duration-200"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      <span>{t.pricing.bookNowCheckDates}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -255,4 +281,3 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
     </section>
   );
 };
-

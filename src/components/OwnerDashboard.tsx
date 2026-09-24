@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { RoomPricing, PackageItem, TripItem, GalleryItem, SiteInfo, BookingRequest } from '../types';
+import { RoomPricing, PackageItem, TripItem, GalleryItem, SiteInfo, BookingRequest, Language, ItemPhoto } from '../types';
+import { translations, translateRoomType, translatePackage, translateTrip, translateGalleryCaption } from '../lib/translations';
+import { useLanguage } from '../lib/LanguageContext';
+import { MultiPhotoUploader } from './MultiPhotoUploader';
 import {
   DEFAULT_ROOM_PRICING,
   DEFAULT_PACKAGES,
@@ -37,14 +40,56 @@ import {
   Clock,
   CreditCard,
   ExternalLink,
+  Globe,
 } from 'lucide-react';
 
 interface OwnerDashboardProps {
   onClose: () => void;
   onDataUpdated: () => void;
+  lang?: Language;
+  onToggleLang?: () => void;
+  onSelectLang?: (lang: Language) => void;
 }
 
-export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataUpdated }) => {
+export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
+  onClose,
+  onDataUpdated,
+  lang: propLang,
+  onToggleLang: propOnToggleLang,
+  onSelectLang: propOnSelectLang,
+}) => {
+  const { lang: contextLang, setLang: contextSetLang, toggleLang: contextToggleLang } = useLanguage();
+  const currentLang = propLang || contextLang || 'en';
+  const t = translations[currentLang];
+  const ta = t.admin;
+
+  const translateOccupancy = (occ?: string) => {
+    if (!occ) return '';
+    if (currentLang === 'en') {
+      if (occ === 'فردي' || occ.toLowerCase() === 'single') return 'Single';
+      if (occ === 'مزدوج' || occ.toLowerCase() === 'double') return 'Double';
+      if (occ === 'ثلاثي' || occ.toLowerCase() === 'triple') return 'Triple';
+      if (occ === 'رباعي' || occ.toLowerCase() === 'quad') return 'Quad';
+    }
+    return occ;
+  };
+
+  const handleSelectLang = (newLang: Language) => {
+    contextSetLang(newLang);
+    if (propOnSelectLang) {
+      propOnSelectLang(newLang);
+    }
+  };
+
+  const handleToggleLang = () => {
+    const next = currentLang === 'ar' ? 'en' : 'ar';
+    contextSetLang(next);
+    if (propOnSelectLang) {
+      propOnSelectLang(next);
+    } else if (propOnToggleLang) {
+      propOnToggleLang();
+    }
+  };
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -72,9 +117,10 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
   const [trips, setTrips] = useState<TripItem[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [siteInfoList, setSiteInfoList] = useState<SiteInfo[]>([]);
+  const [itemPhotos, setItemPhotos] = useState<ItemPhoto[]>([]);
 
   // Action status feedback
-  const [actionStatus, setActionStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [actionStatus, setActionStatus] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [isSeeding, setIsSeeding] = useState(false);
 
   // Editing modals/states
@@ -138,7 +184,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
     };
   }, [session]);
 
-  const showFeedback = (type: 'success' | 'error', message: string) => {
+  const showFeedback = (type: 'success' | 'error' | 'info', message: string) => {
     setActionStatus({ type, message });
     setTimeout(() => setActionStatus(null), 5000);
   };
@@ -156,14 +202,14 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
       });
 
       if (error) {
-        setAuthError(error.message || 'فشل تسجيل الدخول. يرجى التأكد من البريد وكلمة المرور.');
+        setAuthError(error.message || ta.loginErrorDefault);
       } else {
         setSession(data.session);
         fetchAllData();
         fetchBookingRequests();
       }
     } catch (err: any) {
-      setAuthError(err.message || 'حدث خطأ غير متوقع');
+      setAuthError(err.message || ta.errorPrefix);
     } finally {
       setAuthLoading(false);
     }
@@ -195,12 +241,13 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
   // Fetch all Supabase tables
   const fetchAllData = async () => {
     try {
-      const [roomsRes, packagesRes, tripsRes, galleryRes, infoRes] = await Promise.all([
+      const [roomsRes, packagesRes, tripsRes, galleryRes, infoRes, photosRes] = await Promise.all([
         supabase.from('rooms_pricing').select('*').order('display_order', { ascending: true }),
         supabase.from('packages').select('*').order('display_order', { ascending: true }),
         supabase.from('trips').select('*').order('display_order', { ascending: true }),
         supabase.from('gallery').select('*').order('display_order', { ascending: true }),
         supabase.from('site_info').select('*'),
+        supabase.from('item_photos').select('*').order('display_order', { ascending: true }),
       ]);
 
       if (roomsRes.data) setRooms(roomsRes.data);
@@ -208,6 +255,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
       if (tripsRes.data) setTrips(tripsRes.data);
       if (galleryRes.data) setGallery(galleryRes.data);
       if (infoRes.data) setSiteInfoList(infoRes.data);
+      if (photosRes.data) setItemPhotos(photosRes.data);
       onDataUpdated();
     } catch (err) {
       console.error('Error fetching tables:', err);
@@ -233,17 +281,32 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
       if (error) throw error;
 
       if (newStatus === 'confirmed') {
-        showFeedback('success', `تم تأكيد حجز ${request.guest_name} بنجاح وحظر التواريخ على التقويم`);
+        showFeedback(
+          'success',
+          currentLang === 'ar'
+            ? `تم تأكيد حجز ${request.guest_name} بنجاح وحظر التواريخ على التقويم`
+            : `Booking for ${request.guest_name} confirmed successfully and dates blocked on calendar`
+        );
         setConfirmedReminderModal({ ...request, status: 'confirmed' });
       } else if (newStatus === 'cancelled') {
-        showFeedback('success', `تم إلغاء الحجز لـ ${request.guest_name} وإعادة إتاحة الغرفة على الموقع`);
+        showFeedback(
+          'success',
+          currentLang === 'ar'
+            ? `تم إلغاء الحجز لـ ${request.guest_name} وإعادة إتاحة الغرفة على الموقع`
+            : `Booking for ${request.guest_name} cancelled and dates reopened on the website`
+        );
       } else {
-        showFeedback('success', `تمت إعادة الحجز لـ ${request.guest_name} إلى قيد الانتظار`);
+        showFeedback(
+          'success',
+          currentLang === 'ar'
+            ? `تمت إعادة الحجز لـ ${request.guest_name} إلى قيد الانتظار`
+            : `Booking for ${request.guest_name} reset to pending`
+        );
       }
 
       fetchBookingRequests();
     } catch (err: any) {
-      showFeedback('error', `فشل تحديث حالة الحجز: ${err.message}`);
+      showFeedback('error', `${ta.updateStatusError}: ${err.message}`);
     }
   };
 
@@ -251,7 +314,9 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
   const handleCancelUnpaidBooking = async (request: BookingRequest) => {
     if (!request.id) return;
     const confirmPrompt = window.confirm(
-      `هل تريد بالتأكيد إلغاء حجز ${request.guest_name} لعدم تحويل الفلوس؟\n\nسيتم فوراً:\n1. تغيير حالة الحجز إلى "ملغي"\n2. إعادة فتح الغرفة والتواريخ فوراً على التقويم لجميع الزوار\n3. فتح رسالة واتساب جاهزة لإشعار النزيل بالإلغاء`
+      currentLang === 'ar'
+        ? `هل تريد بالتأكيد إلغاء حجز ${request.guest_name} لعدم تحويل الفلوس؟\n\nسيتم فوراً:\n1. تغيير حالة الحجز إلى "ملغي"\n2. إعادة فتح الغرفة والتواريخ فوراً على التقويم لجميع الزوار\n3. فتح رسالة واتساب جاهزة لإشعار النزيل بالإلغاء`
+        : `Are you sure you want to cancel the booking for ${request.guest_name} due to unpaid deposit?\n\nThis will immediately:\n1. Change status to "cancelled"\n2. Reopen the dates on the website calendar\n3. Prepare a WhatsApp cancellation notice for the guest`
     );
     if (!confirmPrompt) return;
 
@@ -263,27 +328,32 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
 
       if (error) throw error;
 
-      showFeedback('success', `تم إلغاء حجز ${request.guest_name} بنجاح وإعادة فتح الغرفة على الموقع!`);
+      showFeedback('success', ta.cancelledReopenedSuccess.replace('{name}', request.guest_name));
       fetchBookingRequests();
       // Open cancellation notice popup
       setCancellationNoticeModal(request);
     } catch (err: any) {
-      showFeedback('error', `فشل إلغاء الحجز: ${err.message}`);
+      showFeedback('error', `${ta.cancelError}: ${err.message}`);
     }
   };
 
   // Delete Booking permanently
   const handleDeleteBooking = async (request: BookingRequest) => {
     if (!request.id) return;
-    if (!window.confirm(`هل أنت متأكد من حذف سجل حجز ${request.guest_name} نهائياً من قاعدة البيانات؟`)) return;
+    const confirmDelete = window.confirm(
+      currentLang === 'ar'
+        ? `هل أنت متأكد من حذف سجل حجز ${request.guest_name} نهائياً من قاعدة البيانات؟`
+        : `Are you sure you want to permanently delete the booking record for ${request.guest_name}?`
+    );
+    if (!confirmDelete) return;
 
     try {
       const { error } = await supabase.from('booking_requests').delete().eq('id', request.id);
       if (error) throw error;
-      showFeedback('success', 'تم حذف سجل الحجز نهائياً');
+      showFeedback('success', ta.deleteSuccess);
       fetchBookingRequests();
     } catch (err: any) {
-      showFeedback('error', `فشل حذف الحجز: ${err.message}`);
+      showFeedback('error', `${ta.deleteError}: ${err.message}`);
     }
   };
 
@@ -300,13 +370,13 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
 
     // Validate type
     if (!file.type.startsWith('image/')) {
-      showFeedback('error', 'الملف المحدد ليس صورة. يرجى اختيار ملف بصيغة JPG أو PNG أو WebP.');
+      showFeedback('error', ta.notAnImage);
       return;
     }
 
     // Validate max size 15MB
     if (file.size > 15 * 1024 * 1024) {
-      showFeedback('error', 'حجم الصورة كبير جداً (الحد الأقصى المسموح 15 ميجابايت).');
+      showFeedback('error', ta.imageTooLarge);
       return;
     }
 
@@ -314,7 +384,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
       setUploadingImage(true);
 
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const cleanFileName = `droub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const cleanFileName = `jazz_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
 
       const { data, error } = await supabase.storage.from('images').upload(cleanFileName, file, {
         cacheControl: '3600',
@@ -323,7 +393,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
 
       if (error) {
         console.error('Storage bucket error:', error);
-        showFeedback('error', `فشل رفع الصورة لمجلد images: ${error.message}`);
+        showFeedback('error', `${ta.uploadBucketFailed}: ${error.message}`);
         return;
       }
 
@@ -331,10 +401,10 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
       const publicUrl = publicData.publicUrl;
 
       onSuccess(publicUrl);
-      showFeedback('success', 'تم رفع الصورة بنجاح إلى التخزين وتحديث الرابط!');
+      showFeedback('success', ta.uploadSuccess);
     } catch (err: any) {
       console.error('Upload exception:', err);
-      showFeedback('error', `حدث خطأ أثناء رفع الصورة: ${err.message || 'يرجى المحاولة مجدداً'}`);
+      showFeedback('error', `${ta.uploadError}: ${err.message || ta.tryAgain}`);
     } finally {
       setUploadingImage(false);
     }
@@ -343,8 +413,26 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onClose, onDataU
   // Build copy-ready InstaPay message for confirmed booking
   const getInstaPayCopyText = (booking: BookingRequest) => {
     const halfDeposit = booking.total_price ? Math.round(booking.total_price * 0.5) : 0;
+    if (currentLang === 'en') {
+      return `Dear ${booking.guest_name},
+We are pleased to inform you that your booking request at Jazz Camp — Ras Shitan, Nuweiba has been accepted!
+
+Booking Details:
+• Accommodation / Package: ${booking.reference_name}
+${booking.occupancy ? `• Occupancy: ${booking.occupancy}\n` : ''}• Check-in: ${booking.check_in}
+• Check-out: ${booking.check_out}
+• Guests: ${booking.guests_count}
+• Total: ${booking.total_price ? `${booking.total_price.toLocaleString()} EGP` : 'As agreed'}
+
+To secure your reservation, please transfer a 50% deposit (${halfDeposit > 0 ? `${halfDeposit.toLocaleString()} EGP` : 'Agreed amount'}):
+InstaPay Transfer Details:
+• Account / Wallet Number: 01009124513
+• Registered Name: Gamal Abdalla Azmy Saafan
+
+Please send a screenshot of the transfer receipt once completed. We look forward to welcoming you to Sinai!`;
+    }
     return `مرحباً أستاذ/ة ${booking.guest_name}،
-يسعدنا إبلاغك بأنه تم تأكيد قبول طلب حجزك في «دروب كامب — رأس شيطان، نويبع»!
+يسعدنا إبلاغك بأنه تم تأكيد قبول طلب حجزك في «جاز كامب — رأس شيطان، نويبع»!
 
 تفاصيل الحجز:
 • الإقامة / الباقة: ${booking.reference_name}
@@ -363,10 +451,17 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
 
   // Build copy-ready cancellation message when guest does not pay deposit
   const getCancellationCopyText = (booking: BookingRequest) => {
+    if (currentLang === 'en') {
+      return `Dear ${booking.guest_name},
+Please note that due to not receiving the deposit payment (InstaPay) for your booking of ${booking.reference_name} from (${booking.check_in} to ${booking.check_out}), the booking request has been cancelled and dates reopened.
+
+We hope to welcome you at Jazz Camp — Ras Shitan in the future!
+For contact & inquiries: 01061189414`;
+    }
     return `مرحباً أستاذ/ة ${booking.guest_name}،
 نحيطكم علماً بأنه نظراً لعدم استلام إشعار تحويل العربون (إنستاباي) لحجز ${booking.reference_name} للفترة من (${booking.check_in} إلى ${booking.check_out})، فقد تم إلغاء طلب الحجز وإعادة إتاحة الغرفة فوراً على الموقع لنزلاء آخرين.
 
-نتطلع لاستضافتكم في دروب كامب — رأس شيطان في أوقات قادمة!
+نتطلع لاستضافتكم في جاز كامب — رأس شيطان في أوقات قادمة!
 للتواصل والاستفسار: 01061189414`;
   };
 
@@ -378,7 +473,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
 
   // SEED INITIAL DATA
   const handleSeedInitialData = async () => {
-    if (!window.confirm('هل تريد رفع البيانات الأولية للكامب إلى قاعدة بيانات سوبابيز؟')) return;
+    if (!window.confirm(ta.seedConfirm)) return;
     setIsSeeding(true);
     try {
       if (rooms.length === 0) await supabase.from('rooms_pricing').insert(DEFAULT_ROOM_PRICING);
@@ -390,9 +485,9 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
         await supabase.from('site_info').insert(siteInfoRows);
       }
       await fetchAllData();
-      showFeedback('success', 'تم تهيئة وتحديث جميع جداول قاعدة البيانات بنجاح!');
+      showFeedback('success', ta.seedSuccess);
     } catch (err: any) {
-      showFeedback('error', `حدث خطأ: ${err.message}`);
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
     } finally {
       setIsSeeding(false);
     }
@@ -417,28 +512,38 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
       if (editingRoom.id) {
         const { error } = await supabase.from('rooms_pricing').update(payload).eq('id', editingRoom.id);
         if (error) throw error;
-        showFeedback('success', 'تم تحديث أسعار الغرفة بنجاح');
+        showFeedback('success', ta.roomUpdateSuccess);
       } else {
         const { error } = await supabase.from('rooms_pricing').insert([payload]);
         if (error) throw error;
-        showFeedback('success', 'تم إضافة الغرفة بنجاح');
+        showFeedback('success', ta.roomAddSuccess);
       }
+
+      // If photos were uploaded using a temporary draft key, link them to the real room_type
+      if (editingRoom.temp_key && editingRoom.room_type) {
+        await supabase
+          .from('item_photos')
+          .update({ item_key: payload.room_type })
+          .eq('item_type', 'room')
+          .eq('item_key', editingRoom.temp_key);
+      }
+
       setEditingRoom(null);
       fetchAllData();
     } catch (err: any) {
-      showFeedback('error', `خطأ: ${err.message}`);
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
     }
   };
 
   const handleDeleteRoom = async (id?: string | number) => {
-    if (!id || !window.confirm('هل أنت متأكد من حذف هذه الغرفة؟')) return;
+    if (!id || !window.confirm(ta.roomDeleteConfirm)) return;
     try {
       const { error } = await supabase.from('rooms_pricing').delete().eq('id', id);
       if (error) throw error;
-      showFeedback('success', 'تم حذف الغرفة بنجاح');
+      showFeedback('success', ta.roomDeleteSuccess);
       fetchAllData();
     } catch (err: any) {
-      showFeedback('error', `خطأ: ${err.message}`);
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
     }
   };
 
@@ -461,28 +566,37 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
       if (editingPackage.id) {
         const { error } = await supabase.from('packages').update(payload).eq('id', editingPackage.id);
         if (error) throw error;
-        showFeedback('success', 'تم تحديث الباقة بنجاح');
+        showFeedback('success', ta.packageUpdateSuccess);
       } else {
         const { error } = await supabase.from('packages').insert([payload]);
         if (error) throw error;
-        showFeedback('success', 'تم إضافة الباقة بنجاح');
+        showFeedback('success', ta.packageAddSuccess);
       }
+
+      if (editingPackage.temp_key && editingPackage.title) {
+        await supabase
+          .from('item_photos')
+          .update({ item_key: payload.title })
+          .eq('item_type', 'package')
+          .eq('item_key', editingPackage.temp_key);
+      }
+
       setEditingPackage(null);
       fetchAllData();
     } catch (err: any) {
-      showFeedback('error', `خطأ: ${err.message}`);
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
     }
   };
 
   const handleDeletePackage = async (id?: string | number) => {
-    if (!id || !window.confirm('هل أنت متأكد من حذف هذه الباقة؟')) return;
+    if (!id || !window.confirm(ta.packageDeleteConfirm)) return;
     try {
       const { error } = await supabase.from('packages').delete().eq('id', id);
       if (error) throw error;
-      showFeedback('success', 'تم حذف الباقة بنجاح');
+      showFeedback('success', ta.packageDeleteSuccess);
       fetchAllData();
     } catch (err: any) {
-      showFeedback('error', `خطأ: ${err.message}`);
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
     }
   };
 
@@ -503,28 +617,37 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
       if (editingTrip.id) {
         const { error } = await supabase.from('trips').update(payload).eq('id', editingTrip.id);
         if (error) throw error;
-        showFeedback('success', 'تم تحديث الرحلة بنجاح');
+        showFeedback('success', ta.tripUpdateSuccess);
       } else {
         const { error } = await supabase.from('trips').insert([payload]);
         if (error) throw error;
-        showFeedback('success', 'تم إضافة الرحلة بنجاح');
+        showFeedback('success', ta.tripAddSuccess);
       }
+
+      if (editingTrip.temp_key && editingTrip.title) {
+        await supabase
+          .from('item_photos')
+          .update({ item_key: payload.title })
+          .eq('item_type', 'trip')
+          .eq('item_key', editingTrip.temp_key);
+      }
+
       setEditingTrip(null);
       fetchAllData();
     } catch (err: any) {
-      showFeedback('error', `خطأ: ${err.message}`);
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
     }
   };
 
   const handleDeleteTrip = async (id?: string | number) => {
-    if (!id || !window.confirm('هل أنت متأكد من حذف هذه الرحلة؟')) return;
+    if (!id || !window.confirm(ta.tripDeleteConfirm)) return;
     try {
       const { error } = await supabase.from('trips').delete().eq('id', id);
       if (error) throw error;
-      showFeedback('success', 'تم حذف الرحلة بنجاح');
+      showFeedback('success', ta.tripDeleteSuccess);
       fetchAllData();
     } catch (err: any) {
-      showFeedback('error', `خطأ: ${err.message}`);
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
     }
   };
 
@@ -543,28 +666,28 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
       if (editingGallery.id) {
         const { error } = await supabase.from('gallery').update(payload).eq('id', editingGallery.id);
         if (error) throw error;
-        showFeedback('success', 'تم تحديث صورة المعرض');
+        showFeedback('success', ta.galleryUpdateSuccess);
       } else {
         const { error } = await supabase.from('gallery').insert([payload]);
         if (error) throw error;
-        showFeedback('success', 'تمت إضافة الصورة إلى المعرض بنجاح');
+        showFeedback('success', ta.galleryAddSuccess);
       }
       setEditingGallery(null);
       fetchAllData();
     } catch (err: any) {
-      showFeedback('error', `خطأ: ${err.message}`);
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
     }
   };
 
   const handleDeleteGallery = async (id?: string | number) => {
-    if (!id || !window.confirm('هل أنت متأكد من حذف هذه الصورة؟')) return;
+    if (!id || !window.confirm(ta.galleryDeleteConfirm)) return;
     try {
       const { error } = await supabase.from('gallery').delete().eq('id', id);
       if (error) throw error;
-      showFeedback('success', 'تم حذف الصورة بنجاح');
+      showFeedback('success', ta.galleryDeleteSuccess);
       fetchAllData();
     } catch (err: any) {
-      showFeedback('error', `خطأ: ${err.message}`);
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
     }
   };
 
@@ -578,11 +701,11 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
         .from('site_info')
         .upsert({ key: editingSiteInfo.key, value: editingSiteInfo.value }, { onConflict: 'key' });
       if (error) throw error;
-      showFeedback('success', 'تم حفظ التعديل بنجاح');
+      showFeedback('success', ta.editInfoSuccess);
       setEditingSiteInfo(null);
       fetchAllData();
     } catch (err: any) {
-      showFeedback('error', `خطأ: ${err.message}`);
+      showFeedback('error', `${ta.errorPrefix}: ${err.message}`);
     }
   };
 
@@ -592,7 +715,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
       <div className="min-h-screen bg-[#0F223D] text-white flex items-center justify-center p-4">
         <div className="flex items-center gap-3 font-['Cairo'] text-lg">
           <RefreshCw className="w-6 h-6 animate-spin text-[#D94E28]" />
-          <span>جاري التحقق من الصلاحيات...</span>
+          <span>{currentLang === 'ar' ? 'جاري التحقق من الصلاحيات...' : 'Verifying credentials...'}</span>
         </div>
       </div>
     );
@@ -606,13 +729,13 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
           {/* Logo & Header */}
           <div className="text-center mb-6">
             <div className="w-20 h-20 mx-auto mb-3 p-1 rounded-2xl bg-[#0F223D] flex items-center justify-center shadow-md">
-              <img src="/logo-emblem.svg" alt="Droub Camp" className="w-full h-full object-contain" />
+              <img src="/logo-emblem.svg" alt="Jazz Camp" className="w-full h-full object-contain" />
             </div>
             <h1 className="font-['Cairo'] font-black text-2xl text-[#0F223D]">
-              إدارة دروب كامب
+              {ta.loginTitle}
             </h1>
             <p className="font-['Tajawal'] text-xs sm:text-sm text-[#64748B] mt-1">
-              تسجيل الدخول المخصص لمالك الكامب لتأكيد الحجوزات وإدارة الأسعار والمحتوى
+              {ta.loginSubtitle}
             </p>
           </div>
 
@@ -628,21 +751,21 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                البريد الإلكتروني (Email)
+                {ta.emailLabel}
               </label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="owner@droubcamp.com"
+                placeholder="owner@jazzcamp.com"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] focus:ring-2 focus:ring-[#0F223D] focus:outline-none text-sm font-sans"
               />
             </div>
 
             <div>
               <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                كلمة المرور (Password)
+                {ta.passwordLabel}
               </label>
               <input
                 type="password"
@@ -662,25 +785,35 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
               {authLoading ? (
                 <>
                   <RefreshCw className="w-5 h-5 animate-spin" />
-                  <span>جاري تسجيل الدخول...</span>
+                  <span>{ta.loggingIn}</span>
                 </>
               ) : (
                 <>
                   <Lock className="w-5 h-5" />
-                  <span>تسجيل الدخول للوحة الإدارة</span>
+                  <span>{ta.loginButton}</span>
                 </>
               )}
             </button>
           </form>
 
-          {/* Back to public site */}
-          <div className="mt-6 pt-4 border-t border-[#F1F5F9] text-center">
+          {/* Language Switch & Back to public site */}
+          <div className="mt-6 pt-4 border-t border-[#F1F5F9] flex items-center justify-between">
+            <button
+              onClick={handleToggleLang}
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-[#FAF8F5] text-xs font-['Cairo'] font-bold text-[#0F223D] hover:bg-[#F1F5F9] transition-colors"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#D94E28]" />
+              <span>{currentLang === 'ar' ? 'English' : 'العربية'}</span>
+            </button>
+
             <button
               onClick={onClose}
+              type="button"
               className="inline-flex items-center gap-1.5 text-xs font-['Cairo'] font-semibold text-[#64748B] hover:text-[#0F223D] transition-colors"
             >
-              <ArrowRight className="w-3.5 h-3.5" />
-              <span>العودة للموقع العام للزوار</span>
+              <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+              <span>{ta.backToSite}</span>
             </button>
           </div>
         </div>
@@ -696,33 +829,42 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#0F223D] p-1 flex items-center justify-center shadow-sm">
-              <img src="/logo-emblem.svg" alt="Droub Camp" className="w-full h-full object-contain" />
+              <img src="/logo-emblem.svg" alt="Jazz Camp" className="w-full h-full object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-['Cairo'] font-black text-lg text-[#0F223D] leading-none">
-                  إدارة دروب كامب
+                  {ta.dashboardTitle}
                 </h1>
                 {pendingCount > 0 && (
                   <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#D94E28] text-white text-[11px] font-['Cairo'] font-bold animate-pulse">
                     <Bell className="w-3 h-3" />
-                    <span>{pendingCount} جديد</span>
+                    <span>{pendingCount} {ta.newCount}</span>
                   </span>
                 )}
               </div>
               <span className="text-[11px] font-['Tajawal'] text-[#64748B]">
-                الحساب: {session.user?.email}
+                {ta.account}: {session.user?.email}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
+              onClick={handleToggleLang}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-xs font-['Cairo'] font-bold text-[#0F223D] hover:bg-[#E2E8F0] transition-colors"
+              title={currentLang === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
+            >
+              <Globe className="w-3.5 h-3.5 text-[#D94E28]" />
+              <span>{currentLang === 'ar' ? 'English' : 'العربية'}</span>
+            </button>
+
+            <button
               onClick={onClose}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-xs font-['Cairo'] font-bold text-[#0F223D] hover:bg-[#E2E8F0] transition-colors"
             >
               <Eye className="w-3.5 h-3.5 text-[#D94E28]" />
-              <span>عرض الموقع</span>
+              <span>{ta.viewSite}</span>
             </button>
 
             <button
@@ -730,7 +872,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FEE2E2] text-[#991B1B] text-xs font-['Cairo'] font-bold hover:bg-[#FCA5A5] transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>خروج</span>
+              <span>{ta.logout}</span>
             </button>
           </div>
         </div>
@@ -747,7 +889,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             }`}
           >
             <Calendar className="w-4 h-4 text-[#D94E28]" />
-            <span>طلبات الحجز</span>
+            <span>{ta.tabRequests}</span>
             {pendingCount > 0 && (
               <span className="px-1.5 py-0.2 rounded-full bg-[#D94E28] text-white text-[10px] font-bold">
                 {pendingCount}
@@ -763,7 +905,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             }`}
           >
             <Bed className="w-4 h-4" />
-            <span>أسعار الغرف ({rooms.length})</span>
+            <span>{ta.tabRooms} ({rooms.length})</span>
           </button>
 
           {/* 3. PACKAGES */}
@@ -774,7 +916,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             }`}
           >
             <Package className="w-4 h-4" />
-            <span>الباقات ({packages.length})</span>
+            <span>{ta.tabPackages} ({packages.length})</span>
           </button>
 
           {/* 4. TRIPS */}
@@ -785,7 +927,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             }`}
           >
             <Compass className="w-4 h-4" />
-            <span>الرحلات ({trips.length})</span>
+            <span>{ta.tabTrips} ({trips.length})</span>
           </button>
 
           {/* 5. GALLERY */}
@@ -796,7 +938,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             }`}
           >
             <Image className="w-4 h-4" />
-            <span>المعرض ({gallery.length})</span>
+            <span>{ta.tabGallery} ({gallery.length})</span>
           </button>
 
           {/* 6. SITE INFO */}
@@ -807,7 +949,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             }`}
           >
             <FileText className="w-4 h-4" />
-            <span>معلومات الموقع</span>
+            <span>{ta.tabSiteInfo}</span>
           </button>
         </div>
       </header>
@@ -840,15 +982,15 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#E2E8F0]">
               <div>
                 <h2 className="font-['Cairo'] font-black text-xl text-[#0F223D] flex items-center gap-2">
-                  <span>إدارة طلبات الحجز (Booking Requests)</span>
+                  <span>{ta.requestsTitle}</span>
                   {pendingCount > 0 && (
                     <span className="px-2.5 py-0.5 rounded-full bg-[#D94E28] text-white text-xs font-bold">
-                      {pendingCount} بانتظار التأكيد
+                      {pendingCount} {ta.pendingBadge}
                     </span>
                   )}
                 </h2>
                 <p className="font-['Tajawal'] text-xs text-[#64748B]">
-                  تأكيد أو إلغاء طلبات النزلاء، وتجهيز رسائل تحويل عربون إنستاباي بنقرة واحدة
+                  {ta.requestsDesc}
                 </p>
               </div>
 
@@ -862,7 +1004,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                       : 'text-[#475569] hover:text-[#0F223D]'
                   }`}
                 >
-                  قيد الانتظار ({bookingRequests.filter((r) => r.status === 'pending').length})
+                  {ta.filterPending} ({bookingRequests.filter((r) => r.status === 'pending').length})
                 </button>
                 <button
                   onClick={() => setRequestFilter('confirmed')}
@@ -872,7 +1014,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                       : 'text-[#475569] hover:text-[#0F223D]'
                   }`}
                 >
-                  مؤكدة ({bookingRequests.filter((r) => r.status === 'confirmed').length})
+                  {ta.filterConfirmed} ({bookingRequests.filter((r) => r.status === 'confirmed').length})
                 </button>
                 <button
                   onClick={() => setRequestFilter('cancelled')}
@@ -882,7 +1024,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                       : 'text-[#475569] hover:text-[#0F223D]'
                   }`}
                 >
-                  ملغية ({bookingRequests.filter((r) => r.status === 'cancelled').length})
+                  {ta.filterCancelled} ({bookingRequests.filter((r) => r.status === 'cancelled').length})
                 </button>
                 <button
                   onClick={() => setRequestFilter('all')}
@@ -892,7 +1034,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                       : 'text-[#475569] hover:text-[#0F223D]'
                   }`}
                 >
-                  الكل ({bookingRequests.length})
+                  {ta.filterAll} ({bookingRequests.length})
                 </button>
               </div>
             </div>
@@ -904,10 +1046,10 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                   <Calendar className="w-7 h-7" />
                 </div>
                 <h3 className="font-['Cairo'] font-bold text-base text-[#0F223D]">
-                  لا توجد طلبات حجز في هذه القائمة حالياً
+                  {ta.noRequests}
                 </h3>
                 <p className="font-['Tajawal'] text-xs text-[#64748B]">
-                  عندما يقوم الزوار بتقديم طلب حجز عبر الموقع ستظهر هنا فوراً وتحدث العداد مباشرة.
+                  {ta.noRequestsDesc}
                 </p>
               </div>
             ) : (
@@ -934,7 +1076,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                           <div>
                             <span className="text-[10px] font-mono text-[#64748B] block mb-0.5">
                               {req.created_at
-                                ? new Date(req.created_at).toLocaleString('ar-EG', {
+                                ? new Date(req.created_at).toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US', {
                                     dateStyle: 'medium',
                                     timeStyle: 'short',
                                   })
@@ -956,48 +1098,48 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                             }`}
                           >
                             {isPending
-                              ? '⏳ قيد الانتظار'
+                              ? ta.statusPending
                               : isConfirmed
-                              ? '✅ مؤكد ومحجوز'
-                              : '❌ ملغي'}
+                              ? ta.statusConfirmed
+                              : ta.statusCancelled}
                           </span>
                         </div>
 
                         {/* Booking Details Grid */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-['Cairo'] mb-3">
                           <div className="bg-[#FAF8F5] p-2.5 rounded-xl border border-[#E2E8F0]">
-                            <span className="text-[#64748B] block text-[10px]">نوع الحجز:</span>
+                            <span className="text-[#64748B] block text-[10px]">{ta.requestTypeLabel}:</span>
                             <span className="font-bold text-[#0F223D] truncate block">
-                              {req.reference_name}
+                              {translateRoomType(req.reference_name, currentLang)}
                             </span>
                           </div>
 
                           {req.occupancy && (
                             <div className="bg-[#FAF8F5] p-2.5 rounded-xl border border-[#E2E8F0]">
-                              <span className="text-[#64748B] block text-[10px]">نوع الإشغال:</span>
-                              <span className="font-bold text-[#D94E28]">{req.occupancy}</span>
+                              <span className="text-[#64748B] block text-[10px]">{ta.occupancyLabel}:</span>
+                              <span className="font-bold text-[#D94E28]">{translateOccupancy(req.occupancy)}</span>
                             </div>
                           )}
 
                           <div className="bg-[#FAF8F5] p-2.5 rounded-xl border border-[#E2E8F0]">
-                            <span className="text-[#64748B] block text-[10px]">النزلاء:</span>
-                            <span className="font-bold text-[#0F223D]">{req.guests_count} فرد</span>
+                            <span className="text-[#64748B] block text-[10px]">{ta.guestsLabel}:</span>
+                            <span className="font-bold text-[#0F223D]">{req.guests_count} {ta.guestsUnit}</span>
                           </div>
 
                           <div className="bg-[#FAF8F5] p-2.5 rounded-xl border border-[#E2E8F0]">
-                            <span className="text-[#64748B] block text-[10px]">تاريخ الوصول:</span>
+                            <span className="text-[#64748B] block text-[10px]">{ta.checkInLabel}:</span>
                             <span className="font-bold text-[#0F223D]">{req.check_in}</span>
                           </div>
 
                           <div className="bg-[#FAF8F5] p-2.5 rounded-xl border border-[#E2E8F0]">
-                            <span className="text-[#64748B] block text-[10px]">تاريخ المغادرة:</span>
+                            <span className="text-[#64748B] block text-[10px]">{ta.checkOutLabel}:</span>
                             <span className="font-bold text-[#0F223D]">{req.check_out}</span>
                           </div>
 
                           <div className="bg-[#FAF8F5] p-2.5 rounded-xl border border-[#E2E8F0]">
-                            <span className="text-[#64748B] block text-[10px]">إجمالي السعر:</span>
+                            <span className="text-[#64748B] block text-[10px]">{ta.totalPriceLabel}:</span>
                             <span className="font-black text-[#D94E28]">
-                              {req.total_price ? `${req.total_price.toLocaleString()} ج.م` : '—'}
+                              {req.total_price ? `${req.total_price.toLocaleString()} ${t.common.currency}` : '—'}
                             </span>
                           </div>
                         </div>
@@ -1019,13 +1161,13 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#25D366]/10 text-[#15803D] hover:bg-[#25D366]/20 font-bold"
                           >
                             <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                            <span>محادثة واتساب</span>
+                            <span>{ta.waChat}</span>
                           </a>
                         </div>
 
                         {req.notes && (
                           <div className="p-2.5 rounded-xl bg-[#FAF8F5] border border-[#E2E8F0] text-xs font-['Tajawal'] text-[#475569] mb-3">
-                            <span className="font-bold block text-[10px] text-[#64748B]">ملاحظات النزيل:</span>
+                            <span className="font-bold block text-[10px] text-[#64748B]">{ta.notesLabel}:</span>
                             {req.notes}
                           </div>
                         )}
@@ -1040,14 +1182,14 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                               className="flex-1 py-2.5 px-4 rounded-xl bg-[#15803D] hover:bg-[#166534] text-white font-['Cairo'] font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all"
                             >
                               <Check className="w-4 h-4" />
-                              <span>تأكيد الحجز وحظر التواريخ</span>
+                              <span>{ta.confirmBtn}</span>
                             </button>
                             <button
                               onClick={() => handleCancelUnpaidBooking(req)}
                               className="py-2.5 px-3.5 rounded-xl bg-[#FEE2E2] hover:bg-[#FECACA] text-[#991B1B] font-['Cairo'] font-bold text-xs transition-colors flex items-center gap-1"
                             >
                               <X className="w-3.5 h-3.5" />
-                              <span>إلغاء لعدم السداد</span>
+                              <span>{ta.cancelUnpaidQuick}</span>
                             </button>
                           </div>
                         )}
@@ -1059,15 +1201,15 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                               className="flex-1 py-2 px-3.5 rounded-xl bg-[#FFF7ED] border border-[#FFEDD5] hover:bg-[#FFEDD5] text-[#C2411C] font-['Cairo'] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
                             >
                               <CreditCard className="w-4 h-4 text-[#D94E28]" />
-                              <span>رسالة تحويل إنستاباي</span>
+                              <span>{ta.copyInstaPayBtn}</span>
                             </button>
                             <button
                               onClick={() => handleCancelUnpaidBooking(req)}
                               className="py-2 px-3.5 rounded-xl bg-[#FEF2F2] border border-[#FECACA] hover:bg-[#FEE2E2] text-[#DC2626] font-['Cairo'] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"
-                              title="إلغاء الحجز لعدم تحويل الفلوس وإعادة فتح الغرفة فوراً للنزلاء"
+                              title={ta.cancelForNonPayment}
                             >
                               <X className="w-4 h-4 text-[#DC2626]" />
-                              <span>إلغاء الحجز لعدم تحويل الفلوس (إعادة فتح الغرفة)</span>
+                              <span>{ta.cancelForNonPayment}</span>
                             </button>
                           </div>
                         )}
@@ -1078,15 +1220,15 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                               onClick={() => handleUpdateBookingStatus(req, 'pending')}
                               className="py-1.5 px-3 rounded-xl bg-[#FAF8F5] hover:bg-[#E2E8F0] text-[#0F223D] font-['Cairo'] font-bold text-xs transition-colors"
                             >
-                              إعادة تعيين (قيد الانتظار)
+                              {ta.resetPending}
                             </button>
                             <button
                               onClick={() => handleDeleteBooking(req)}
                               className="py-1.5 px-3 rounded-xl bg-[#FEE2E2] hover:bg-[#FECACA] text-[#991B1B] font-['Cairo'] font-bold text-xs flex items-center gap-1 transition-colors"
-                              title="حذف نهائي من قاعدة البيانات"
+                              title={ta.deleteRecord}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                              <span>حذف السجل نهائياً</span>
+                              <span>{ta.deleteRecord}</span>
                             </button>
                           </div>
                         )}
@@ -1107,16 +1249,17 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                  إدارة أسعار الغرف (rooms_pricing)
+                  {ta.roomsTitle}
                 </h2>
                 <p className="font-['Tajawal'] text-xs text-[#64748B]">
-                  تعديل أسعار الغرف حسب الإشغال (فردي، مزدوج، ثلاثي، رباعي)
+                  {ta.roomsSubtitle}
                 </p>
               </div>
               <button
                 onClick={() =>
                   setEditingRoom({
                     room_type: '',
+                    temp_key: `room_${Date.now()}`,
                     single_price: '',
                     double_price: '',
                     triple_price: '',
@@ -1128,7 +1271,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-xs hover:bg-[#C2411C] transition-all shadow-sm"
               >
                 <Plus className="w-4 h-4" />
-                <span>إضافة غرفة جديدة</span>
+                <span>{ta.addNewRoom}</span>
               </button>
             </div>
 
@@ -1141,36 +1284,36 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <h3 className="font-['Cairo'] font-bold text-base text-[#0F223D]">
-                        {room.room_type}
+                        {translateRoomType(room.room_type, currentLang)}
                       </h3>
                       <span className="text-[10px] font-['Cairo'] font-bold px-2 py-0.5 rounded-full bg-[#FAF8F5] text-[#64748B]">
-                        ترتيب: {room.display_order}
+                        {ta.order}: {room.display_order}
                       </span>
                     </div>
 
                     <div className="bg-[#FAF8F5] p-2 rounded-lg flex items-center justify-between border border-[#E2E8F0] mb-3 text-xs font-['Cairo']">
-                      <span className="text-[#64748B] text-[11px] font-['Tajawal']">عدد الغرف الإجمالي في الكامب:</span>
+                      <span className="text-[#64748B] text-[11px] font-['Tajawal']">{ta.totalCampRooms}</span>
                       <span className="font-bold text-[#0F223D] bg-white px-2 py-0.5 rounded border border-[#CBD5E1]">
-                        {room.total_units || 6} غرف
+                        {room.total_units || 6} {ta.unitsWord}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-xs font-['Cairo'] mb-4">
                       <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                        <span className="text-[#64748B] block text-[10px]">فردي (Single):</span>
-                        <span className="font-bold text-[#0F223D]">{room.single_price || '—'} ج.م</span>
+                        <span className="text-[#64748B] block text-[10px]">{ta.singlePriceLabel}</span>
+                        <span className="font-bold text-[#0F223D]">{room.single_price ? `${room.single_price} ${t.common.currency}` : '—'}</span>
                       </div>
                       <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                        <span className="text-[#64748B] block text-[10px]">مزدوج (Double):</span>
-                        <span className="font-bold text-[#D94E28]">{room.double_price || '—'} ج.م</span>
+                        <span className="text-[#64748B] block text-[10px]">{ta.doublePriceLabel}</span>
+                        <span className="font-bold text-[#D94E28]">{room.double_price ? `${room.double_price} ${t.common.currency}` : '—'}</span>
                       </div>
                       <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                        <span className="text-[#64748B] block text-[10px]">ثلاثي (Triple):</span>
-                        <span className="font-bold text-[#0F223D]">{room.triple_price || '—'} ج.م</span>
+                        <span className="text-[#64748B] block text-[10px]">{ta.triplePriceLabel}</span>
+                        <span className="font-bold text-[#0F223D]">{room.triple_price ? `${room.triple_price} ${t.common.currency}` : '—'}</span>
                       </div>
                       <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                        <span className="text-[#64748B] block text-[10px]">رباعي (Quad):</span>
-                        <span className="font-bold text-[#0F223D]">{room.quadruple_price || '—'} ج.م</span>
+                        <span className="text-[#64748B] block text-[10px]">{ta.quadPriceLabel}</span>
+                        <span className="font-bold text-[#0F223D]">{room.quadruple_price ? `${room.quadruple_price} ${t.common.currency}` : '—'}</span>
                       </div>
                     </div>
                   </div>
@@ -1181,12 +1324,12 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                       className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FAF8F5] hover:bg-[#E2E8F0] text-[#0F223D] font-['Cairo'] font-bold text-xs transition-colors"
                     >
                       <Edit2 className="w-3.5 h-3.5 text-[#D94E28]" />
-                      <span>تعديل الأسعار</span>
+                      <span>{ta.editPrices}</span>
                     </button>
                     <button
                       onClick={() => handleDeleteRoom(room.id)}
                       className="p-2 rounded-xl bg-[#FEE2E2] hover:bg-[#FECACA] text-[#991B1B] transition-colors"
-                      title="حذف"
+                      title={ta.delete}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1205,16 +1348,17 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                  إدارة الباقات والعروض (packages)
+                  {ta.packagesTitle}
                 </h2>
                 <p className="font-['Tajawal'] text-xs text-[#64748B]">
-                  إضافة وتعديل الباقات مع إمكانية رفع الصور مباشرة لمجلد images في سوبابيز
+                  {ta.packagesSubtitle}
                 </p>
               </div>
               <button
                 onClick={() =>
                   setEditingPackage({
                     title: '',
+                    temp_key: `package_${Date.now()}`,
                     description: '',
                     price: '',
                     image_url: '',
@@ -1226,12 +1370,14 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-xs hover:bg-[#C2411C] transition-all shadow-sm"
               >
                 <Plus className="w-4 h-4" />
-                <span>إضافة باقة جديدة</span>
+                <span>{ta.addNewPackage}</span>
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {packages.map((pkg) => (
+              {packages.map((pkg) => {
+                const transPkg = translatePackage(pkg, currentLang);
+                return (
                 <div
                   key={pkg.id}
                   className="bg-white rounded-2xl overflow-hidden border border-[#E2E8F0] shadow-sm flex flex-col justify-between"
@@ -1239,24 +1385,24 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                   <div>
                     <div className="h-40 bg-[#E2E8F0] relative overflow-hidden">
                       {pkg.image_url ? (
-                        <img src={pkg.image_url} alt={pkg.title} className="w-full h-full object-cover" />
+                        <img src={pkg.image_url} alt={transPkg.title} className="w-full h-full object-cover" />
                       ) : (
                         <div className="flex items-center justify-center h-full text-xs text-[#64748B]">
-                          بدون صورة
+                          {ta.noImage}
                         </div>
                       )}
-                      {pkg.category && (
+                      {transPkg.category && (
                         <span className="absolute top-2 end-2 bg-[#D94E28] text-white text-[10px] font-['Cairo'] font-bold px-2 py-0.5 rounded-full">
-                          {pkg.category}
+                          {transPkg.category}
                         </span>
                       )}
                     </div>
                     <div className="p-4">
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <h3 className="font-['Cairo'] font-bold text-base text-[#0F223D]">{pkg.title}</h3>
-                        <span className="font-['Cairo'] font-extrabold text-sm text-[#D94E28]">{pkg.price}</span>
+                        <h3 className="font-['Cairo'] font-bold text-base text-[#0F223D]">{transPkg.title}</h3>
+                        <span className="font-['Cairo'] font-extrabold text-sm text-[#D94E28]">{transPkg.price}</span>
                       </div>
-                      <p className="font-['Tajawal'] text-xs text-[#64748B] line-clamp-2">{pkg.description}</p>
+                      <p className="font-['Tajawal'] text-xs text-[#64748B] line-clamp-2">{transPkg.description}</p>
                     </div>
                   </div>
 
@@ -1266,18 +1412,19 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                       className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FAF8F5] hover:bg-[#E2E8F0] text-[#0F223D] font-['Cairo'] font-bold text-xs transition-colors"
                     >
                       <Edit2 className="w-3.5 h-3.5 text-[#D94E28]" />
-                      <span>تعديل</span>
+                      <span>{ta.edit}</span>
                     </button>
                     <button
                       onClick={() => handleDeletePackage(pkg.id)}
                       className="p-2 rounded-xl bg-[#FEE2E2] hover:bg-[#FECACA] text-[#991B1B] transition-colors"
-                      title="حذف"
+                      title={ta.delete}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1290,16 +1437,17 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                  إدارة الرحلات الخارجية (trips)
+                  {ta.tripsTitle}
                 </h2>
                 <p className="font-['Tajawal'] text-xs text-[#64748B]">
-                  رحلات الهايكنج، الوديان، طابا، الكانيون، ودهب
+                  {ta.tripsSubtitle}
                 </p>
               </div>
               <button
                 onClick={() =>
                   setEditingTrip({
                     title: '',
+                    temp_key: `trip_${Date.now()}`,
                     description: '',
                     image_url: '',
                     is_active: true,
@@ -1309,29 +1457,31 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F223D] text-white font-['Cairo'] font-bold text-xs hover:bg-[#1E3A5F] transition-all shadow-sm"
               >
                 <Plus className="w-4 h-4" />
-                <span>إضافة رحلة جديدة</span>
+                <span>{ta.addNewTrip}</span>
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {trips.map((trip) => (
+              {trips.map((trip) => {
+                const transTrip = translateTrip(trip, currentLang);
+                return (
                 <div
                   key={trip.id}
                   className="bg-white rounded-2xl overflow-hidden border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row justify-between"
                 >
                   <div className="w-full sm:w-1/3 h-36 sm:h-auto bg-[#E2E8F0]">
                     {trip.image_url ? (
-                      <img src={trip.image_url} alt={trip.title} className="w-full h-full object-cover" />
+                      <img src={trip.image_url} alt={transTrip.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className="flex items-center justify-center h-full text-xs text-[#64748B]">
-                        بدون صورة
+                        {ta.noImage}
                       </div>
                     )}
                   </div>
                   <div className="p-4 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-['Cairo'] font-bold text-base text-[#0F223D] mb-1">{trip.title}</h3>
-                      <p className="font-['Tajawal'] text-xs text-[#64748B] line-clamp-3">{trip.description}</p>
+                      <h3 className="font-['Cairo'] font-bold text-base text-[#0F223D] mb-1">{transTrip.title}</h3>
+                      <p className="font-['Tajawal'] text-xs text-[#64748B] line-clamp-3">{transTrip.description}</p>
                     </div>
                     <div className="flex items-center gap-2 pt-3 mt-3 border-t border-[#F1F5F9]">
                       <button
@@ -1339,19 +1489,20 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                         className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-[#FAF8F5] hover:bg-[#E2E8F0] text-[#0F223D] font-['Cairo'] font-bold text-xs transition-colors"
                       >
                         <Edit2 className="w-3.5 h-3.5 text-[#0F223D]" />
-                        <span>تعديل</span>
+                        <span>{ta.edit}</span>
                       </button>
                       <button
                         onClick={() => handleDeleteTrip(trip.id)}
                         className="p-1.5 rounded-xl bg-[#FEE2E2] hover:bg-[#FECACA] text-[#991B1B] transition-colors"
-                        title="حذف"
+                        title={ta.delete}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1364,10 +1515,10 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                  إدارة معرض الصور (gallery)
+                  {ta.galleryTitle}
                 </h2>
                 <p className="font-['Tajawal'] text-xs text-[#64748B]">
-                  رفع صور عالية الجودة للشاطئ، الأكواخ، والأجواء مباشرة
+                  {ta.gallerySubtitle}
                 </p>
               </div>
               <button
@@ -1381,7 +1532,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-xs hover:bg-[#C2411C] transition-all shadow-sm"
               >
                 <Upload className="w-4 h-4" />
-                <span>رفع صورة جديدة</span>
+                <span>{ta.uploadNewImage}</span>
               </button>
             </div>
 
@@ -1396,14 +1547,14 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                   </div>
                   <div className="p-3">
                     <p className="font-['Tajawal'] text-[11px] text-[#64748B] line-clamp-1 mb-2">
-                      {item.caption || 'بدون وصف'}
+                      {item.caption ? translateGalleryCaption(item.caption, currentLang) : ta.noCaption}
                     </p>
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => setEditingGallery(item)}
                         className="flex-1 py-1 rounded-lg bg-[#FAF8F5] text-[#0F223D] text-[10px] font-['Cairo'] font-bold hover:bg-[#E2E8F0]"
                       >
-                        تعديل
+                        {ta.edit}
                       </button>
                       <button
                         onClick={() => handleDeleteGallery(item.id)}
@@ -1427,10 +1578,10 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                  إدارة نصوص ومعلومات الموقع (site_info)
+                  {ta.siteInfoTitle}
                 </h2>
                 <p className="font-['Tajawal'] text-xs text-[#64748B]">
-                  تعديل أرقام الهواتف، خطوات الحجز، إنستاباي، ونصوص الترحيب
+                  {ta.siteInfoSubtitle}
                 </p>
               </div>
               <button
@@ -1443,7 +1594,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-xs hover:bg-[#C2411C] transition-all shadow-sm"
               >
                 <Plus className="w-4 h-4" />
-                <span>إضافة نص جديد</span>
+                <span>{ta.addNewInfo}</span>
               </button>
             </div>
 
@@ -1466,7 +1617,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF8F5] hover:bg-[#E2E8F0] text-[#0F223D] font-['Cairo'] font-bold text-xs transition-colors self-end sm:self-center"
                   >
                     <Edit2 className="w-3.5 h-3.5 text-[#D94E28]" />
-                    <span>تعديل النص</span>
+                    <span>{ta.edit}</span>
                   </button>
                 </div>
               ))}
@@ -1485,7 +1636,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-[#D94E28]" />
                 <h3 className="font-['Cairo'] font-black text-lg text-[#0F223D]">
-                  رسالة تحويل العربون عبر إنستاباي
+                  {ta.instaPayModalTitle}
                 </h3>
               </div>
               <button
@@ -1500,7 +1651,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             </div>
 
             <p className="font-['Tajawal'] text-xs sm:text-sm text-[#64748B] mb-3">
-              تم تجهيز نص رسالة التأكيد ومعلومات سداد العربون (50% على حساب جمال عبدالله عزمي سعفان). يمكنك نسخ النص أو إرساله مباشرة للنزيل عبر واتساب:
+              {ta.instaPayModalDesc}
             </p>
 
             {/* Ready-to-copy textarea */}
@@ -1522,7 +1673,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[#0F223D] hover:bg-[#1E3A5F] text-white font-['Cairo'] font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
               >
                 {copiedInstaPay ? <Check className="w-4 h-4 text-[#86EFAC]" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedInstaPay ? 'تم النسخ إلى الحافظة!' : 'نسخ الرسالة بالكامل'}</span>
+                <span>{copiedInstaPay ? ta.copiedToClipboard : ta.copyFullMessage}</span>
               </button>
 
               <a
@@ -1534,7 +1685,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-['Cairo'] font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>إرسال عبر واتساب</span>
+                <span>{ta.sendViaWhatsApp}</span>
               </a>
             </div>
           </div>
@@ -1551,7 +1702,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
               <div className="flex items-center gap-2">
                 <X className="w-5 h-5 text-[#DC2626]" />
                 <h3 className="font-['Cairo'] font-bold text-base sm:text-lg text-[#0F223D]">
-                  تم إلغاء الحجز وإعادة فتح الغرفة
+                  {ta.cancellationModalTitle}
                 </h3>
               </div>
               <button
@@ -1563,7 +1714,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             </div>
 
             <p className="font-['Tajawal'] text-xs sm:text-sm text-[#64748B] mb-3">
-              تم إلغاء الحجز وإعادة إتاحة تواريخ الغرفة فوراً في التقويم لجميع النزلاء. يمكنك الآن إرسال رسالة الإشعار الجاهزة للنزيل عبر واتساب أو نسخها:
+              {ta.cancellationModalDesc}
             </p>
 
             {/* Ready-to-copy textarea */}
@@ -1585,7 +1736,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[#0F223D] hover:bg-[#1E3A5F] text-white font-['Cairo'] font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
               >
                 {copiedCancellation ? <Check className="w-4 h-4 text-[#86EFAC]" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedCancellation ? 'تم النسخ إلى الحافظة!' : 'نسخ الرسالة بالكامل'}</span>
+                <span>{copiedCancellation ? ta.copiedToClipboard : ta.copyFullMessage}</span>
               </button>
 
               <a
@@ -1597,7 +1748,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-['Cairo'] font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>إرسال للنزيل واتساب</span>
+                <span>{ta.sendGuestWhatsApp}</span>
               </a>
             </div>
           </div>
@@ -1612,7 +1763,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto border border-[#E2E8F0] shadow-2xl">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#F1F5F9]">
               <h3 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                {editingRoom.id ? 'تعديل أسعار وسعة الغرفة' : 'إضافة غرفة جديدة'}
+                {editingRoom.id ? ta.editRoomTitle : ta.createRoomTitle}
               </h3>
               <button
                 onClick={() => setEditingRoom(null)}
@@ -1625,21 +1776,21 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <form onSubmit={handleSaveRoom} className="space-y-4">
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  اسم ونوع الغرفة / الكوخ *
+                  {ta.roomNameLabel}
                 </label>
                 <input
                   type="text"
                   required
                   value={editingRoom.room_type}
                   onChange={(e) => setEditingRoom({ ...editingRoom, room_type: e.target.value })}
-                  placeholder="غرف ديلوكس مطلة على البحر / Seaview Deluxe Rooms"
+                  placeholder={ta.roomNamePlaceholder}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-sm font-['Tajawal']"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  إجمالي عدد الغرف المتوفرة في الكامب (Capacity Units) *
+                  {ta.capacityLabel}
                 </label>
                 <input
                   type="number"
@@ -1651,14 +1802,14 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-sm font-mono"
                 />
                 <p className="text-[11px] text-[#64748B] font-['Tajawal'] mt-1">
-                  العدد الفعلي المتاح في الكامب من هذا النوع (مثلاً 6 غرف ديلوكس). لن يتم قفل اليوم في التقويم إلا إذا تم حجز كافة الغرف لنفس التاريخ.
+                  {ta.capacityHint}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                    سعر الفردي (Single Price)
+                    {ta.roomSinglePrice}
                   </label>
                   <input
                     type="number"
@@ -1670,7 +1821,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 </div>
                 <div>
                   <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                    سعر المزدوج (Double Price) *
+                    {ta.roomDoublePrice}
                   </label>
                   <input
                     type="number"
@@ -1683,7 +1834,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 </div>
                 <div>
                   <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                    سعر الثلاثي (Triple Price)
+                    {ta.roomTriplePrice}
                   </label>
                   <input
                     type="number"
@@ -1695,7 +1846,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 </div>
                 <div>
                   <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                    سعر الرباعي (Quad Price)
+                    {ta.roomQuadPrice}
                   </label>
                   <input
                     type="number"
@@ -1709,7 +1860,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
 
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  ترتيب الظهور في الموقع (Display Order)
+                  {ta.displayOrderLabel}
                 </label>
                 <input
                   type="number"
@@ -1719,19 +1870,56 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 />
               </div>
 
+              {/* Multi-Photo Uploader Section for Room */}
+              <div className="pt-2">
+                <MultiPhotoUploader
+                  itemType="room"
+                  itemKey={editingRoom.room_type || editingRoom.temp_key || (editingRoom.id ? String(editingRoom.id) : '')}
+                  itemTitle={editingRoom.room_type}
+                  currentPhotos={itemPhotos.filter((p) => {
+                    if (p.item_type !== 'room') return false;
+                    const keys = [
+                      editingRoom.room_type,
+                      editingRoom.temp_key,
+                      editingRoom.id ? String(editingRoom.id) : undefined,
+                    ].filter(Boolean);
+                    return keys.includes(p.item_key);
+                  })}
+                  onPhotosChange={(updatedPhotos) => {
+                    const currentKeys = [
+                      editingRoom.room_type,
+                      editingRoom.temp_key,
+                      editingRoom.id ? String(editingRoom.id) : undefined,
+                    ].filter(Boolean);
+                    const remainingPhotos = itemPhotos.filter(
+                      (p) => !(p.item_type === 'room' && currentKeys.includes(p.item_key))
+                    );
+                    setItemPhotos([...remainingPhotos, ...updatedPhotos]);
+                    onDataUpdated();
+                  }}
+                  onKeyAssigned={(generatedKey) => {
+                    if (!editingRoom.temp_key && !editingRoom.room_type) {
+                      setEditingRoom((prev) => prev ? { ...prev, temp_key: generatedKey } : null);
+                    }
+                  }}
+                  lang={currentLang}
+                  showFeedback={showFeedback}
+                />
+              </div>
+
               <div className="flex items-center gap-3 pt-4 border-t border-[#F1F5F9]">
                 <button
                   type="submit"
                   className="flex-1 py-3 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-sm hover:bg-[#C2411C] transition-colors"
                 >
-                  حفظ البيانات
+                  {ta.saveData}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingRoom(null)}
                   className="px-5 py-3 rounded-xl bg-[#F1F5F9] text-[#0F223D] font-['Cairo'] font-bold text-sm hover:bg-[#E2E8F0]"
                 >
-                  إلغاء
+                  {ta.cancel}
                 </button>
               </div>
             </form>
@@ -1747,7 +1935,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto border border-[#E2E8F0] shadow-2xl">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#F1F5F9]">
               <h3 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                {editingPackage.id ? 'تعديل الباقة' : 'إضافة باقة جديدة'}
+                {editingPackage.id ? ta.editPackageTitle : ta.createPackageTitle}
               </h3>
               <button
                 onClick={() => setEditingPackage(null)}
@@ -1760,41 +1948,41 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <form onSubmit={handleSavePackage} className="space-y-4">
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  عنوان الباقة *
+                  {ta.packageTitleLabel}
                 </label>
                 <input
                   type="text"
                   required
                   value={editingPackage.title}
                   onChange={(e) => setEditingPackage({ ...editingPackage, title: e.target.value })}
-                  placeholder="باقة الهروب للسيناء - 3 ليالي"
+                  placeholder={ta.packageTitlePlaceholder}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-sm font-['Tajawal']"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  السعر (نص أو رقم) *
+                  {ta.packagePriceLabel}
                 </label>
                 <input
                   type="text"
                   required
                   value={editingPackage.price}
                   onChange={(e) => setEditingPackage({ ...editingPackage, price: e.target.value })}
-                  placeholder="3,800 ج.م للفرد"
+                  placeholder={ta.packagePricePlaceholder}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-sm font-['Cairo']"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  التصنيف (Category)
+                  {ta.packageCategoryLabel}
                 </label>
                 <input
                   type="text"
                   value={editingPackage.category || ''}
                   onChange={(e) => setEditingPackage({ ...editingPackage, category: e.target.value })}
-                  placeholder="إقامة كاملة / رومانسي / مغامرة"
+                  placeholder={ta.packageCategoryPlaceholder}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-sm font-['Tajawal']"
                 />
               </div>
@@ -1802,7 +1990,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
               {/* Reliable Direct File Upload & URL */}
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  صورة الباقة (رفع ملف مباشر لتخزين سوبابيز أو إدخال رابط)
+                  {ta.packageImageLabel}
                 </label>
 
                 {/* Hidden native file input triggered programmatically */}
@@ -1835,12 +2023,12 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                     {uploadingImage ? (
                       <>
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>جاري الرفع...</span>
+                        <span>{ta.uploading}</span>
                       </>
                     ) : (
                       <>
                         <Upload className="w-3.5 h-3.5 text-[#D94E28]" />
-                        <span>اختيار من الجهاز</span>
+                        <span>{ta.chooseFromDevice}</span>
                       </>
                     )}
                   </button>
@@ -1855,7 +2043,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                       className="w-full h-full object-cover"
                     />
                     <span className="absolute bottom-2 end-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full font-['Cairo']">
-                      معاينة الصورة
+                      {ta.imagePreview}
                     </span>
                   </div>
                 )}
@@ -1863,7 +2051,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
 
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  وصف الباقة *
+                  {ta.packageDescLabel}
                 </label>
                 <textarea
                   required
@@ -1874,19 +2062,59 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 ></textarea>
               </div>
 
+              {/* Multi-Photo Uploader Section for Package */}
+              <div className="pt-2">
+                <MultiPhotoUploader
+                  itemType="package"
+                  itemKey={editingPackage.title || editingPackage.temp_key || (editingPackage.id ? String(editingPackage.id) : '')}
+                  itemTitle={editingPackage.title}
+                  currentPhotos={itemPhotos.filter((p) => {
+                    if (p.item_type !== 'package') return false;
+                    const keys = [
+                      editingPackage.title,
+                      editingPackage.temp_key,
+                      editingPackage.id ? String(editingPackage.id) : undefined,
+                    ].filter(Boolean);
+                    return keys.includes(p.item_key);
+                  })}
+                  onPhotosChange={(updatedPhotos) => {
+                    const currentKeys = [
+                      editingPackage.title,
+                      editingPackage.temp_key,
+                      editingPackage.id ? String(editingPackage.id) : undefined,
+                    ].filter(Boolean);
+                    const remainingPhotos = itemPhotos.filter(
+                      (p) => !(p.item_type === 'package' && currentKeys.includes(p.item_key))
+                    );
+                    setItemPhotos([...remainingPhotos, ...updatedPhotos]);
+                    if (updatedPhotos.length > 0 && !editingPackage.image_url) {
+                      setEditingPackage((prev) => prev ? { ...prev, image_url: updatedPhotos[0].image_url } : null);
+                    }
+                    onDataUpdated();
+                  }}
+                  onKeyAssigned={(generatedKey) => {
+                    if (!editingPackage.temp_key && !editingPackage.title) {
+                      setEditingPackage((prev) => prev ? { ...prev, temp_key: generatedKey } : null);
+                    }
+                  }}
+                  lang={currentLang}
+                  showFeedback={showFeedback}
+                />
+              </div>
+
               <div className="flex items-center gap-3 pt-4 border-t border-[#F1F5F9]">
                 <button
                   type="submit"
                   className="flex-1 py-3 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-sm hover:bg-[#C2411C] transition-colors"
                 >
-                  حفظ الباقة
+                  {ta.savePackage}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingPackage(null)}
                   className="px-5 py-3 rounded-xl bg-[#F1F5F9] text-[#0F223D] font-['Cairo'] font-bold text-sm hover:bg-[#E2E8F0]"
                 >
-                  إلغاء
+                  {ta.cancel}
                 </button>
               </div>
             </form>
@@ -1902,7 +2130,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto border border-[#E2E8F0] shadow-2xl">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#F1F5F9]">
               <h3 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                {editingTrip.id ? 'تعديل الرحلة الخارجية' : 'إضافة رحلة جديدة'}
+                {editingTrip.id ? ta.editTripTitle : ta.createTripTitle}
               </h3>
               <button
                 onClick={() => setEditingTrip(null)}
@@ -1915,14 +2143,14 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <form onSubmit={handleSaveTrip} className="space-y-4">
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  اسم ومسار الرحلة *
+                  {ta.tripNameLabel}
                 </label>
                 <input
                   type="text"
                   required
                   value={editingTrip.title}
                   onChange={(e) => setEditingTrip({ ...editingTrip, title: e.target.value })}
-                  placeholder="رحلة وادي الوشواش"
+                  placeholder={ta.tripNamePlaceholder}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-sm font-['Tajawal']"
                 />
               </div>
@@ -1930,7 +2158,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
               {/* Reliable Direct File Upload & URL */}
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  صورة الرحلة (رفع ملف مباشر لتخزين سوبابيز أو إدخال رابط)
+                  {ta.tripImageLabel}
                 </label>
 
                 <input
@@ -1962,12 +2190,12 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                     {uploadingImage ? (
                       <>
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>جاري الرفع...</span>
+                        <span>{ta.uploading}</span>
                       </>
                     ) : (
                       <>
                         <Upload className="w-3.5 h-3.5 text-[#D94E28]" />
-                        <span>اختيار من الجهاز</span>
+                        <span>{ta.chooseFromDevice}</span>
                       </>
                     )}
                   </button>
@@ -1977,7 +2205,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                   <div className="h-32 rounded-xl overflow-hidden bg-[#FAF8F5] border border-[#E2E8F0] relative">
                     <img src={editingTrip.image_url} alt="Preview" className="w-full h-full object-cover" />
                     <span className="absolute bottom-2 end-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full font-['Cairo']">
-                      معاينة الصورة
+                      {ta.imagePreview}
                     </span>
                   </div>
                 )}
@@ -1985,7 +2213,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
 
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  تفاصيل وبرنامج الرحلة *
+                  {ta.tripDescLabel}
                 </label>
                 <textarea
                   required
@@ -1996,19 +2224,59 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                 ></textarea>
               </div>
 
+              {/* Multi-Photo Uploader Section for Trip */}
+              <div className="pt-2">
+                <MultiPhotoUploader
+                  itemType="trip"
+                  itemKey={editingTrip.title || editingTrip.temp_key || (editingTrip.id ? String(editingTrip.id) : '')}
+                  itemTitle={editingTrip.title}
+                  currentPhotos={itemPhotos.filter((p) => {
+                    if (p.item_type !== 'trip') return false;
+                    const keys = [
+                      editingTrip.title,
+                      editingTrip.temp_key,
+                      editingTrip.id ? String(editingTrip.id) : undefined,
+                    ].filter(Boolean);
+                    return keys.includes(p.item_key);
+                  })}
+                  onPhotosChange={(updatedPhotos) => {
+                    const currentKeys = [
+                      editingTrip.title,
+                      editingTrip.temp_key,
+                      editingTrip.id ? String(editingTrip.id) : undefined,
+                    ].filter(Boolean);
+                    const remainingPhotos = itemPhotos.filter(
+                      (p) => !(p.item_type === 'trip' && currentKeys.includes(p.item_key))
+                    );
+                    setItemPhotos([...remainingPhotos, ...updatedPhotos]);
+                    if (updatedPhotos.length > 0 && !editingTrip.image_url) {
+                      setEditingTrip((prev) => prev ? { ...prev, image_url: updatedPhotos[0].image_url } : null);
+                    }
+                    onDataUpdated();
+                  }}
+                  onKeyAssigned={(generatedKey) => {
+                    if (!editingTrip.temp_key && !editingTrip.title) {
+                      setEditingTrip((prev) => prev ? { ...prev, temp_key: generatedKey } : null);
+                    }
+                  }}
+                  lang={currentLang}
+                  showFeedback={showFeedback}
+                />
+              </div>
+
               <div className="flex items-center gap-3 pt-4 border-t border-[#F1F5F9]">
                 <button
                   type="submit"
                   className="flex-1 py-3 rounded-xl bg-[#0F223D] text-white font-['Cairo'] font-bold text-sm hover:bg-[#1E3A5F] transition-colors"
                 >
-                  حفظ الرحلة
+                  {ta.saveTrip}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingTrip(null)}
                   className="px-5 py-3 rounded-xl bg-[#F1F5F9] text-[#0F223D] font-['Cairo'] font-bold text-sm hover:bg-[#E2E8F0]"
                 >
-                  إلغاء
+                  {ta.cancel}
                 </button>
               </div>
             </form>
@@ -2024,7 +2292,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
           <div className="bg-white rounded-3xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto border border-[#E2E8F0] shadow-2xl">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#F1F5F9]">
               <h3 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                {editingGallery.id ? 'تعديل صورة المعرض' : 'إضافة صورة للمعرض'}
+                {editingGallery.id ? ta.editGalleryTitle : ta.createGalleryTitle}
               </h3>
               <button
                 onClick={() => setEditingGallery(null)}
@@ -2037,7 +2305,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <form onSubmit={handleSaveGallery} className="space-y-4">
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  الصورة (رفع مباشر لتخزين سوبابيز أو إدخال رابط) *
+                  {ta.galleryImageLabel}
                 </label>
 
                 <input
@@ -2070,12 +2338,12 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                     {uploadingImage ? (
                       <>
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>جاري الرفع...</span>
+                        <span>{ta.uploading}</span>
                       </>
                     ) : (
                       <>
                         <Upload className="w-3.5 h-3.5" />
-                        <span>اختيار من الجهاز</span>
+                        <span>{ta.chooseFromDevice}</span>
                       </>
                     )}
                   </button>
@@ -2085,7 +2353,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                   <div className="h-40 rounded-xl overflow-hidden bg-[#FAF8F5] border border-[#E2E8F0] relative">
                     <img src={editingGallery.image_url} alt="Preview" className="w-full h-full object-cover" />
                     <span className="absolute bottom-2 end-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full font-['Cairo']">
-                      معاينة الصورة
+                      {ta.imagePreview}
                     </span>
                   </div>
                 )}
@@ -2093,20 +2361,20 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
 
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  تعليق أو وصف الصورة (Caption)
+                  {ta.captionLabel}
                 </label>
                 <input
                   type="text"
                   value={editingGallery.caption || ''}
                   onChange={(e) => setEditingGallery({ ...editingGallery, caption: e.target.value })}
-                  placeholder="شروق الشمس الساحر فوق خليج العقبة"
+                  placeholder={ta.captionPlaceholder}
                   className="w-full px-3.5 py-2 rounded-xl border border-[#CBD5E1] text-xs font-['Tajawal']"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  ترتيب العرض
+                  {ta.displayOrder}
                 </label>
                 <input
                   type="number"
@@ -2121,14 +2389,14 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                   type="submit"
                   className="flex-1 py-3 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-sm hover:bg-[#C2411C] transition-colors"
                 >
-                  حفظ الصورة
+                  {ta.saveImage}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingGallery(null)}
                   className="px-5 py-3 rounded-xl bg-[#F1F5F9] text-[#0F223D] font-['Cairo'] font-bold text-sm hover:bg-[#E2E8F0]"
                 >
-                  إلغاء
+                  {ta.cancel}
                 </button>
               </div>
             </form>
@@ -2144,7 +2412,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto border border-[#E2E8F0] shadow-2xl">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#F1F5F9]">
               <h3 className="font-['Cairo'] font-bold text-lg text-[#0F223D]">
-                تعديل نص ومعلومات الموقع
+                {editingSiteInfo.id ? ta.editInfoTitle : ta.addNewInfo}
               </h3>
               <button
                 onClick={() => setEditingSiteInfo(null)}
@@ -2157,7 +2425,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
             <form onSubmit={handleSaveSiteInfo} className="space-y-4">
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  المفتاح (Key) *
+                  {ta.keyLabel}
                 </label>
                 <input
                   type="text"
@@ -2171,7 +2439,7 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
 
               <div>
                 <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                  القيمة / النص المعروض للزوار *
+                  {ta.valueLabel}
                 </label>
                 <textarea
                   required
@@ -2187,14 +2455,14 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
                   type="submit"
                   className="flex-1 py-3 rounded-xl bg-[#D94E28] text-white font-['Cairo'] font-bold text-sm hover:bg-[#C2411C] transition-colors"
                 >
-                  حفظ التعديل
+                  {ta.saveEdit}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingSiteInfo(null)}
                   className="px-5 py-3 rounded-xl bg-[#F1F5F9] text-[#0F223D] font-['Cairo'] font-bold text-sm hover:bg-[#E2E8F0]"
                 >
-                  إلغاء
+                  {ta.cancel}
                 </button>
               </div>
             </form>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GalleryItem, Language } from '../types';
-import { translations } from '../lib/translations';
+import { translations, translateGalleryCaption } from '../lib/translations';
 import { X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 
 interface GallerySectionProps {
@@ -52,31 +52,34 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallery, lang })
 
         {/* Gallery Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5">
-          {gallery.map((item, index) => (
-            <div
-              key={item.id || index}
-              onClick={() => openLightbox(index)}
-              className="group relative h-44 sm:h-64 md:h-72 rounded-2xl sm:rounded-3xl overflow-hidden bg-[#E2E8F0] cursor-pointer shadow-sm hover:shadow-lg transition-all duration-300"
-            >
-              <img
-                src={item.image_url}
-                alt={item.caption || `Droub Camp photo ${index + 1}`}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 sm:p-4 text-white">
-                {item.caption && (
-                  <p className="font-['Tajawal'] text-xs sm:text-sm font-medium line-clamp-2 drop-shadow">
-                    {item.caption}
-                  </p>
-                )}
-                <div className="mt-2 flex items-center gap-1 text-[11px] text-[#38BDF8] font-['Cairo']">
-                  <Maximize2 className="w-3.5 h-3.5" />
-                  <span>{t.gallery.zoom}</span>
+          {gallery.map((item, index) => {
+            const caption = translateGalleryCaption(item.caption, lang);
+            return (
+              <div
+                key={item.id || index}
+                onClick={() => openLightbox(index)}
+                className="group relative h-44 sm:h-64 md:h-72 rounded-2xl sm:rounded-3xl overflow-hidden bg-[#E2E8F0] cursor-pointer shadow-sm hover:shadow-lg transition-all duration-300"
+              >
+                <img
+                  src={item.image_url}
+                  alt={caption || `Jazz Camp photo ${index + 1}`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 sm:p-4 text-white">
+                  {caption && (
+                    <p className="font-['Tajawal'] text-xs sm:text-sm font-medium line-clamp-2 drop-shadow">
+                      {caption}
+                    </p>
+                  )}
+                  <div className="mt-2 flex items-center gap-1 text-[11px] text-[#38BDF8] font-['Cairo']">
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>{t.gallery.zoom}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -129,12 +132,12 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallery, lang })
           >
             <img
               src={gallery[activeImageIndex].image_url}
-              alt={gallery[activeImageIndex].caption || 'Droub Camp photo'}
+              alt={translateGalleryCaption(gallery[activeImageIndex].caption, lang) || 'Jazz Camp photo'}
               className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl"
             />
             {gallery[activeImageIndex].caption && (
               <p className="mt-4 text-center font-['Tajawal'] text-white/90 text-sm sm:text-base max-w-xl bg-black/40 px-4 py-2 rounded-xl backdrop-blur-md">
-                {gallery[activeImageIndex].caption}
+                {translateGalleryCaption(gallery[activeImageIndex].caption, lang)}
               </p>
             )}
             <span className="mt-2 text-xs font-['Cairo'] text-white/60">

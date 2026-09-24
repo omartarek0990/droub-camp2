@@ -48,7 +48,11 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ lang, aboutText }) =
             </h2>
             <div className="font-['Tajawal'] text-base sm:text-lg text-[#334155] leading-relaxed space-y-4">
               <p>
-                {aboutText || t.about.defaultP1}
+                {lang === 'en'
+                  ? aboutText && !/[\u0600-\u06ff]/.test(aboutText)
+                    ? aboutText
+                    : t.about.defaultP1
+                  : aboutText || t.about.defaultP1}
               </p>
               <p>
                 {t.about.defaultP2}
@@ -117,10 +121,10 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ lang, aboutText }) =
             {/* Floating Brand Stamp with real emblem */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0F223D] text-white p-4 sm:p-5 rounded-3xl shadow-2xl border-4 border-[#FAF8F5] text-center pointer-events-none transform -rotate-3 flex flex-col items-center">
               <div className="w-14 h-14 rounded-2xl bg-white p-1 mb-1.5 shadow-sm">
-                <img src="/logo-emblem.svg" alt="Droub Camp" className="w-full h-full object-contain" />
+                <img src="/logo-emblem.svg" alt="Jazz Camp" className="w-full h-full object-contain" />
               </div>
               <span className="font-['Cairo'] font-black text-xs tracking-wider uppercase text-white block">
-                {lang === 'ar' ? 'دروب كامب' : 'Droub Camp'}
+                {lang === 'ar' ? 'جاز كامب' : 'Jazz Camp'}
               </span>
               <span className="font-['Tajawal'] text-[10px] text-[#94A3B8] block">
                 {lang === 'ar' ? 'رأس شيطان • نويبع' : 'Ras Shitan • Nuweiba'}

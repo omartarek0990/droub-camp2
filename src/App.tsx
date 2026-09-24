@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from './lib/supabase';
-import { RoomPricing, PackageItem, TripItem, GalleryItem, Language, OccupancyType } from './types';
+import { RoomPricing, PackageItem, TripItem, GalleryItem, OccupancyType, Language } from './types';
 import {
   DEFAULT_ROOM_PRICING,
   DEFAULT_PACKAGES,
@@ -8,6 +8,7 @@ import {
   DEFAULT_GALLERY,
   DEFAULT_SITE_INFO,
 } from './lib/supabase';
+import { LanguageProvider, useLanguage } from './lib/LanguageContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { PricingSection } from './components/PricingSection';
@@ -22,12 +23,8 @@ import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 import { OwnerDashboard } from './components/OwnerDashboard';
 import { BookingModal } from './components/BookingModal';
 
-export default function App() {
-  // Language State (Default is English 'en')
-  const [lang, setLang] = useState<Language>(() => {
-    const saved = localStorage.getItem('droub_camp_lang');
-    return saved === 'ar' || saved === 'en' ? (saved as Language) : 'en';
-  });
+function AppContent() {
+  const { lang, setLang, toggleLang } = useLanguage();
 
   // Owner View Hash detection (#owner)
   const [isOwnerView, setIsOwnerView] = useState<boolean>(() => {
@@ -53,17 +50,6 @@ export default function App() {
     reference: '',
     occupancy: 'double',
   });
-
-  // Sync RTL and lang attribute with html element & persist preference
-  useEffect(() => {
-    document.documentElement.lang = lang;
-    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-    try {
-      localStorage.setItem('droub_camp_lang', lang);
-    } catch {
-      // ignore storage errors
-    }
-  }, [lang]);
 
   // Listen for hash changes to detect manual navigation to #owner
   useEffect(() => {
@@ -142,11 +128,6 @@ export default function App() {
     loadSupabaseData();
   }, [loadSupabaseData]);
 
-  // Language toggle handler
-  const handleToggleLang = () => {
-    setLang((prev) => (prev === 'ar' ? 'en' : 'ar'));
-  };
-
   // Close Owner Dashboard and return to public website
   const handleCloseOwner = () => {
     window.location.hash = '';
@@ -185,6 +166,9 @@ export default function App() {
   if (isOwnerView) {
     return (
       <OwnerDashboard
+        lang={lang}
+        onToggleLang={toggleLang}
+        onSelectLang={setLang}
         onClose={handleCloseOwner}
         onDataUpdated={loadSupabaseData}
       />
@@ -197,7 +181,8 @@ export default function App() {
       {/* 1. Header with official logo, nav links, and on-site booking CTA */}
       <Header
         lang={lang}
-        onToggleLang={handleToggleLang}
+        onToggleLang={toggleLang}
+        onSelectLang={setLang}
         onOpenBooking={handleOpenGeneralBooking}
       />
 
@@ -211,7 +196,7 @@ export default function App() {
       <PricingSection
         rooms={rooms}
         lang={lang}
-        pricingNote={siteInfo.pricing_note}
+        pricingNote={lang === 'ar' ? (siteInfo.pricing_note_ar || siteInfo.pricing_note) : (siteInfo.pricing_note_en || undefined)}
         onOpenBooking={handleOpenRoomBooking}
       />
 
@@ -229,11 +214,14 @@ export default function App() {
       <TripsSection
         trips={trips}
         lang={lang}
-        tripsIntro={siteInfo.trips_intro}
+        tripsIntro={lang === 'ar' ? (siteInfo.trips_intro_ar || siteInfo.trips_intro) : (siteInfo.trips_intro_en || undefined)}
       />
 
       {/* 7. About the Camp & Philosophy */}
-      <AboutSection lang={lang} aboutText={siteInfo.about_philosophy} />
+      <AboutSection
+        lang={lang}
+        aboutText={lang === 'ar' ? (siteInfo.about_philosophy_ar || siteInfo.about_philosophy) : (siteInfo.about_philosophy_en || undefined)}
+      />
 
       {/* 8. Photo Gallery with Lightbox Zoom (from gallery table) */}
       <GallerySection gallery={gallery} lang={lang} />
@@ -241,8 +229,8 @@ export default function App() {
       {/* 9. Location & Booking Section (Map, InstaPay steps, quick contact) */}
       <LocationBookingSection
         lang={lang}
-        bookingStep1={siteInfo.booking_step_1}
-        bookingStep2={siteInfo.booking_step_2}
+        bookingStep1={lang === 'ar' ? (siteInfo.booking_step_1_ar || siteInfo.booking_step_1) : (siteInfo.booking_step_1_en || undefined)}
+        bookingStep2={lang === 'ar' ? (siteInfo.booking_step_2_ar || siteInfo.booking_step_2) : (siteInfo.booking_step_2_en || undefined)}
         phone={siteInfo.phone}
         whatsapp={siteInfo.whatsapp}
         instagram={siteInfo.instagram}
@@ -268,5 +256,13 @@ export default function App() {
         initialOccupancy={bookingModalConfig.occupancy}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }

@@ -34,25 +34,34 @@ export const Logo: React.FC<LogoProps> = ({
   const isAr = lang === 'ar';
 
   return (
-    <div id="droub-brand-logo" className={`inline-flex items-center gap-2.5 sm:gap-3 select-none ${className}`}>
-      {/* Real Droub Camp Logo Mark / Emblem */}
-      <div className={`relative flex items-center justify-center flex-shrink-0 ${iconDimensions} rounded-xl bg-white p-1 border border-black/5 shadow-sm overflow-hidden`}>
+    <div id="jazz-brand-logo" className={`inline-flex items-center gap-2.5 sm:gap-3 select-none ${className}`}>
+      {/* Authentic Jazz Camp Logo Mark / Emblem */}
+      <div className={`relative flex items-center justify-center flex-shrink-0 ${iconDimensions} rounded-xl shadow-sm overflow-hidden border border-black/5 bg-[#EA9F70]`}>
         <img
-          src="/logo-emblem.svg"
-          alt="Droub Camp Emblem"
-          className="w-full h-full object-contain"
+          src="/logo.png"
+          onError={(e) => {
+            // Fallback to SVG if png not loaded
+            const target = e.currentTarget;
+            if (target.src !== '/logo-emblem.svg') {
+              target.src = '/logo-emblem.svg';
+            }
+          }}
+          alt="Jazz Camp Emblem"
+          className="w-full h-full object-cover"
         />
       </div>
 
       {/* Brand Text Stack */}
-      <div className="flex flex-col text-start">
-        <div className="flex items-center gap-1.5 leading-none">
+      <div className="flex flex-col text-start justify-center">
+        <div className="flex items-center gap-1.5 leading-tight">
           <span className={`font-['Cairo'] font-black tracking-tight ${textColor} ${primaryTextSize}`}>
-            {isAr ? 'دروب كامب' : 'Droub Camp'}
+            {isAr ? 'جاز كامب' : 'Jazz Camp'}
           </span>
-          <span className="text-[#D94E28] font-bold text-xs tracking-wider opacity-90 hidden sm:inline">
-            {isAr ? 'DROUB CAMP' : 'رأس شيطان'}
-          </span>
+          {showSubtext && (
+            <span className="text-[#D94E28] font-bold text-xs tracking-wider opacity-90 hidden sm:inline">
+              {isAr ? 'JAZZ CAMP' : 'RAS SHITAN'}
+            </span>
+          )}
         </div>
         {showSubtext && (
           <span className={`font-['Tajawal'] font-medium text-[11px] sm:text-xs tracking-wide ${subtextColor} mt-0.5`}>
