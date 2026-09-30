@@ -12,7 +12,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lang, setLangState] = useState<Language>(() => {
     try {
-      const saved = localStorage.getItem('jazz_camp_lang') || localStorage.getItem('droub_camp_lang');
+      const saved = localStorage.getItem('nuweiba_camp_lang') || localStorage.getItem('jazz_camp_lang') || localStorage.getItem('droub_camp_lang');
       if (saved === 'ar' || saved === 'en') return saved as Language;
     } catch {}
     return 'en';
@@ -21,8 +21,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLang = (newLang: Language) => {
     setLangState(newLang);
     try {
+      localStorage.setItem('nuweiba_camp_lang', newLang);
       localStorage.setItem('jazz_camp_lang', newLang);
-      localStorage.setItem('droub_camp_lang', newLang);
       document.documentElement.lang = newLang;
       document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
     } catch {}
@@ -36,8 +36,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-      localStorage.setItem('jazz_camp_lang', lang);
-      localStorage.setItem('droub_camp_lang', lang);
+      localStorage.setItem('nuweiba_camp_lang', lang);
     } catch {}
   }, [lang]);
 
@@ -53,7 +52,7 @@ export const useLanguage = (): LanguageContextType => {
   if (!context) {
     const fallbackLang: Language =
       typeof window !== 'undefined' &&
-      (localStorage.getItem('jazz_camp_lang') || localStorage.getItem('droub_camp_lang')) === 'ar'
+      (localStorage.getItem('nuweiba_camp_lang') || localStorage.getItem('jazz_camp_lang') || localStorage.getItem('droub_camp_lang')) === 'ar'
         ? 'ar'
         : 'en';
     return {

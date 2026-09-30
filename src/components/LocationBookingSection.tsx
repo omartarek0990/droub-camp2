@@ -286,7 +286,7 @@ export const LocationBookingSection: React.FC<LocationBookingSectionProps> = ({
           {/* Embedded Google Map */}
           <div className="w-full h-80 sm:h-96 bg-[#E2E8F0] relative">
             <iframe
-              title="Jazz Camp Ras Shitan Map"
+              title="Nuweiba Camp Ras Shitan Map"
               src="https://maps.google.com/maps?q=Ras+Shitan+Nuweiba+South+Sinai&t=&z=13&ie=UTF8&iwloc=&output=embed"
               width="100%"
               height="100%"

@@ -22,7 +22,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
   const t = translations[lang];
   const [selectedOccupancy, setSelectedOccupancy] = useState<'all' | OccupancyType>('all');
 
-  // Representative room imagery and feature tags for Jazz Camp accommodations
+  // Representative room imagery and feature tags for Nuweiba Camp accommodations
   const getRoomMeta = (roomType: string) => {
     const lower = roomType.toLowerCase();
     if (lower.includes('ديلوكس') || lower.includes('deluxe') || lower.includes('seaview')) {

@@ -385,8 +385,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   };
 
   const whatsappMessageText = lang === 'ar'
-    ? `مرحباً جاز كامب، قمت بتقديم طلب حجز عبر الموقع:\n- الإقامة: ${lastSubmittedBooking?.reference_name}\n- الوصول: ${lastSubmittedBooking?.check_in}\n- المغادرة: ${lastSubmittedBooking?.check_out}\n- الاسم: ${lastSubmittedBooking?.guest_name}\n- الهاتف: ${lastSubmittedBooking?.guest_phone}\nأرجو المتابعة والتأكيد.`
-    : `Hello Jazz Camp, I submitted a booking request through the website:\n- Selection: ${lastSubmittedBooking?.reference_name}\n- Check-in: ${lastSubmittedBooking?.check_in}\n- Check-out: ${lastSubmittedBooking?.check_out}\n- Name: ${lastSubmittedBooking?.guest_name}\n- Phone: ${lastSubmittedBooking?.guest_phone}\nPlease confirm.`;
+    ? `مرحباً نويبع كامب، قمت بتقديم طلب حجز عبر الموقع:\n- الإقامة: ${lastSubmittedBooking?.reference_name}\n- الوصول: ${lastSubmittedBooking?.check_in}\n- المغادرة: ${lastSubmittedBooking?.check_out}\n- الاسم: ${lastSubmittedBooking?.guest_name}\n- الهاتف: ${lastSubmittedBooking?.guest_phone}\nأرجو المتابعة والتأكيد.`
+    : `Hello Nuweiba Camp, I submitted a booking request through the website:\n- Selection: ${lastSubmittedBooking?.reference_name}\n- Check-in: ${lastSubmittedBooking?.check_in}\n- Check-out: ${lastSubmittedBooking?.check_out}\n- Name: ${lastSubmittedBooking?.guest_name}\n- Phone: ${lastSubmittedBooking?.guest_phone}\nPlease confirm.`;
 
   return (
     <div

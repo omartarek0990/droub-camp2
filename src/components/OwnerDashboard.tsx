@@ -435,7 +435,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
     const halfDeposit = booking.total_price ? Math.round(booking.total_price * 0.5) : 0;
     if (currentLang === 'en') {
       return `Dear ${booking.guest_name},
-We are pleased to inform you that your booking request at Jazz Camp — Ras Shitan, Nuweiba has been accepted!
+We are pleased to inform you that your booking request at Nuweiba Camp — Ras Shitan, Nuweiba has been accepted!
 
 Booking Details:
 • Accommodation / Package: ${booking.reference_name}
@@ -452,7 +452,7 @@ InstaPay Transfer Details:
 Please send a screenshot of the transfer receipt once completed. We look forward to welcoming you to Sinai!`;
     }
     return `مرحباً أستاذ/ة ${booking.guest_name}،
-يسعدنا إبلاغك بأنه تم تأكيد قبول طلب حجزك في «جاز كامب — رأس شيطان، نويبع»!
+يسعدنا إبلاغك بأنه تم تأكيد قبول طلب حجزك في «نويبع كامب — رأس شيطان، نويبع»!
 
 تفاصيل الحجز:
 • الإقامة / الباقة: ${booking.reference_name}
@@ -475,13 +475,13 @@ ${booking.occupancy ? `• نوع الإشغال: ${booking.occupancy}\n` : ''}�
       return `Dear ${booking.guest_name},
 Please note that due to not receiving the deposit payment (InstaPay) for your booking of ${booking.reference_name} from (${booking.check_in} to ${booking.check_out}), the booking request has been cancelled and dates reopened.
 
-We hope to welcome you at Jazz Camp — Ras Shitan in the future!
+We hope to welcome you at Nuweiba Camp — Ras Shitan in the future!
 For contact & inquiries: 01061189414`;
     }
     return `مرحباً أستاذ/ة ${booking.guest_name}،
 نحيطكم علماً بأنه نظراً لعدم استلام إشعار تحويل العربون (إنستاباي) لحجز ${booking.reference_name} للفترة من (${booking.check_in} إلى ${booking.check_out})، فقد تم إلغاء طلب الحجز وإعادة إتاحة الغرفة فوراً على الموقع لنزلاء آخرين.
 
-نتطلع لاستضافتكم في جاز كامب — رأس شيطان في أوقات قادمة!
+نتطلع لاستضافتكم في نويبع كامب — رأس شيطان في أوقات قادمة!
 للتواصل والاستفسار: 01061189414`;
   };
 
@@ -771,10 +771,10 @@ For contact & inquiries: 01061189414`;
     return (
       <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 border border-[#E2E8F0] shadow-xl">
-          {/* Logo & Header */}
+          {/* Header */}
           <div className="text-center mb-6">
-            <div className="w-20 h-20 mx-auto mb-3 p-1 rounded-2xl bg-[#0F223D] flex items-center justify-center shadow-md">
-              <img src="/logo-emblem.svg" alt="Jazz Camp" className="w-full h-full object-contain" />
+            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-[#0F223D] text-white flex items-center justify-center shadow-md">
+              <Lock className="w-7 h-7 text-[#D94E28]" />
             </div>
             <h1 className="font-['Cairo'] font-black text-2xl text-[#0F223D]">
               {ta.loginTitle}
@@ -803,7 +803,7 @@ For contact & inquiries: 01061189414`;
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="owner@jazzcamp.com"
+                placeholder="owner@nuweibacamp.com"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] focus:ring-2 focus:ring-[#0F223D] focus:outline-none text-sm font-sans"
               />
             </div>
@@ -873,9 +873,6 @@ For contact & inquiries: 01061189414`;
       <header className="sticky top-0 z-30 bg-white border-b border-[#E2E8F0] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#0F223D] p-1 flex items-center justify-center shadow-sm">
-              <img src="/logo-emblem.svg" alt="Jazz Camp" className="w-full h-full object-contain" />
-            </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-['Cairo'] font-black text-lg text-[#0F223D] leading-none">

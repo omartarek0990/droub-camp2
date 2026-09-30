@@ -38,7 +38,7 @@ function AppContent() {
   const [gallery, setGallery] = useState<GalleryItem[]>(DEFAULT_GALLERY);
   const [siteInfo, setSiteInfo] = useState<Record<string, string>>(() => {
     try {
-      const cached = localStorage.getItem('jazz_camp_site_info');
+      const cached = localStorage.getItem('nuweiba_camp_site_info') || localStorage.getItem('jazz_camp_site_info');
       if (cached) {
         return { ...DEFAULT_SITE_INFO, ...JSON.parse(cached) };
       }
@@ -107,7 +107,7 @@ function AppContent() {
         });
         setSiteInfo(infoMap);
         try {
-          localStorage.setItem('jazz_camp_site_info', JSON.stringify(infoMap));
+          localStorage.setItem('nuweiba_camp_site_info', JSON.stringify(infoMap));
         } catch {
           // ignore storage quota issues
         }

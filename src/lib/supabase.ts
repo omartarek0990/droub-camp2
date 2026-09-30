@@ -104,7 +104,7 @@ export const DEFAULT_TRIPS: TripItem[] = [
 export const DEFAULT_GALLERY: GalleryItem[] = [
   {
     image_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=75',
-    caption: 'شروق الشمس الساحر فوق خليج العقبة من أمام غرف وأكواخ جاز كامب',
+    caption: 'شروق الشمس الساحر فوق خليج العقبة من أمام غرف وأكواخ نويبع كامب',
     display_order: 1,
   },
   {
@@ -164,7 +164,7 @@ export const DEFAULT_SITE_INFO: Record<string, string> = {
   amenities_intro_ar: 'نقدم لكم ضيافة سيناوية أصيلة في قلب الطبيعة البكر مع كافة وسائل الراحة التي تضمن استرخاءكم التام.',
   amenities_intro_en: 'Authentic Sinai hospitality in the heart of untouched nature with all amenities to ensure total relaxation.',
   amenities_intro: 'نقدم لكم ضيافة سيناوية أصيلة في قلب الطبيعة البكر مع كافة وسائل الراحة التي تضمن استرخاءكم التام.',
-  about_philosophy_ar: 'جاز كامب هو ملاذ هادئ يقع مباشرة على شاطئ رأس شيطان برماله ومياهه الفيروزية البكر. يتميز بشاطئ صخري رائع لمحبي السنوركلينج واستكشاف الشعاب المرجانية، مع جزء رملي للسباحة والاسترخاء. فلسفتنا هي العودة للبساطة، والضيافة البدوية الأصيلة، والهروب من زحام وصخب المدينة لعيش تجربة سينائية حقيقية لا تُنسى.',
-  about_philosophy_en: 'Jazz Camp is nestled directly on the renowned Ras Shitan beach in Nuweiba, South Sinai, where rugged red mountains plunge straight into the turquoise Gulf of Aqaba. Designed as a sanctuary from modern city rush, we believe true luxury lies in simplicity, purity, and nature.',
-  about_philosophy: 'جاز كامب هو ملاذ هادئ يقع مباشرة على شاطئ رأس شيطان برماله ومياهه الفيروزية البكر. يتميز بشاطئ صخري رائع لمحبي السنوركلينج واستكشاف الشعاب المرجانية، مع جزء رملي للسباحة والاسترخاء. فلسفتنا هي العودة للبساطة، والضيافة البدوية الأصيلة، والهروب من زحام وصخب المدينة لعيش تجربة سينائية حقيقية لا تُنسى.',
+  about_philosophy_ar: 'نويبع كامب هو ملاذ هادئ يقع مباشرة على شاطئ رأس شيطان برماله ومياهه الفيروزية البكر. يتميز بشاطئ صخري رائع لمحبي السنوركلينج واستكشاف الشعاب المرجانية، مع جزء رملي للسباحة والاسترخاء. فلسفتنا هي العودة للبساطة، والضيافة البدوية الأصيلة، والهروب من زحام وصخب المدينة لعيش تجربة سينائية حقيقية لا تُنسى.',
+  about_philosophy_en: 'Nuweiba Camp is nestled directly on the renowned Ras Shitan beach in Nuweiba, South Sinai, where rugged red mountains plunge straight into the turquoise Gulf of Aqaba. Designed as a sanctuary from modern city rush, we believe true luxury lies in simplicity, purity, and nature.',
+  about_philosophy: 'نويبع كامب هو ملاذ هادئ يقع مباشرة على شاطئ رأس شيطان برماله ومياهه الفيروزية البكر. يتميز بشاطئ صخري رائع لمحبي السنوركلينج واستكشاف الشعاب المرجانية، مع جزء رملي للسباحة والاسترخاء. فلسفتنا هي العودة للبساطة، والضيافة البدوية الأصيلة، والهروب من زحام وصخب المدينة لعيش تجربة سينائية حقيقية لا تُنسى.',
 };

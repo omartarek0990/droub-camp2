@@ -118,15 +118,12 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ lang, aboutText }) =
               </div>
             </div>
 
-            {/* Floating Brand Stamp with real emblem */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0F223D] text-white p-4 sm:p-5 rounded-3xl shadow-2xl border-4 border-[#FAF8F5] text-center pointer-events-none transform -rotate-3 flex flex-col items-center">
-              <div className="w-14 h-14 rounded-2xl bg-white p-1 mb-1.5 shadow-sm">
-                <img src="/logo-emblem.svg" alt="Jazz Camp" className="w-full h-full object-contain" />
-              </div>
-              <span className="font-['Cairo'] font-black text-xs tracking-wider uppercase text-white block">
-                {lang === 'ar' ? 'جاز كامب' : 'Jazz Camp'}
+            {/* Floating Brand Stamp */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0F223D] text-white px-5 py-4 rounded-3xl shadow-2xl border-4 border-[#FAF8F5] text-center pointer-events-none transform -rotate-3 flex flex-col items-center">
+              <span className="font-['Cairo'] font-black text-sm sm:text-base tracking-wider uppercase text-white block">
+                {lang === 'ar' ? 'نويبع كامب' : 'Nuweiba Camp'}
               </span>
-              <span className="font-['Tajawal'] text-[10px] text-[#94A3B8] block">
+              <span className="font-['Tajawal'] text-xs text-[#94A3B8] block mt-0.5">
                 {lang === 'ar' ? 'رأس شيطان • نويبع' : 'Ras Shitan • Nuweiba'}
               </span>
             </div>

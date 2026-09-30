@@ -62,7 +62,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallery, lang })
               >
                 <img
                   src={item.image_url}
-                  alt={caption || `Jazz Camp photo ${index + 1}`}
+                  alt={caption || `Nuweiba Camp photo ${index + 1}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
@@ -132,7 +132,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallery, lang })
           >
             <img
               src={gallery[activeImageIndex].image_url}
-              alt={translateGalleryCaption(gallery[activeImageIndex].caption, lang) || 'Jazz Camp photo'}
+              alt={translateGalleryCaption(gallery[activeImageIndex].caption, lang) || 'Nuweiba Camp photo'}
               className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl"
             />
             {gallery[activeImageIndex].caption && (

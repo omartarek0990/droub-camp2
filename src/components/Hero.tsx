@@ -79,19 +79,10 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
         {/* Official Brand Badge */}
         <div
           id="hero-badge"
-          className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#FAF8F5] text-xs sm:text-sm font-semibold font-['Cairo'] mb-5 shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#FAF8F5] text-xs sm:text-sm font-semibold font-['Cairo'] mb-5 shadow-sm"
         >
-          <img
-            src="/logo-emblem.svg"
-            alt="Emblem"
-            className="w-5 h-5 object-contain rounded-full bg-white p-0.5"
-            width="20"
-            height="20"
-          />
-          <span className="flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-[#D94E28]" />
-            <span>{locationText}</span>
-          </span>
+          <MapPin className="w-4 h-4 text-[#D94E28]" />
+          <span>{locationText}</span>
         </div>
 
         {/* Main Headline */}
@@ -101,7 +92,7 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
         >
           {lang === 'ar' ? (
             <>
-              جاز كامب <span className="text-[#D94E28]">«JAZZ»</span>
+              نويبع كامب <span className="text-[#D94E28]">«NUWEIBA»</span>
               <br />
               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] block mt-2">
                 {dynamicTitle}
@@ -109,7 +100,7 @@ export const Hero: React.FC<HeroProps> = ({ lang, onOpenBooking, siteInfo }) => 
             </>
           ) : (
             <>
-              Jazz Camp <span className="text-[#D94E28]">«Ras Shitan»</span>
+              Nuweiba Camp <span className="text-[#D94E28]">«Ras Shitan»</span>
               <br />
               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#F8FAFC] block mt-2">
                 {dynamicTitle}

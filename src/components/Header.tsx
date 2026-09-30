@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
             <a
               href="#"
               className="flex items-center gap-2 group focus:outline-none"
-              aria-label="Jazz Camp Home"
+              aria-label="Nuweiba Camp Home"
             >
               <Logo size="md" variant="navy" lang={lang} showSubtext={false} />
             </a>

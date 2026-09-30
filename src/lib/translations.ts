@@ -417,13 +417,17 @@ export function translateTrip(
 }
 
 const GALLERY_TRANSLATIONS: Record<string, { ar: string; en: string }> = {
+  'شروق الشمس الساحر فوق خليج العقبة من أمام غرف وأكواخ نويبع كامب': {
+    ar: 'شروق الشمس الساحر فوق خليج العقبة من أمام غرف وأكواخ نويبع كامب',
+    en: 'Enchanting sunrise over the Gulf of Aqaba in front of Nuweiba Camp rooms and huts',
+  },
   'شروق الشمس الساحر فوق خليج العقبة من أمام غرف وأكواخ جاز كامب': {
-    ar: 'شروق الشمس الساحر فوق خليج العقبة من أمام غرف وأكواخ جاز كامب',
-    en: 'Enchanting sunrise over the Gulf of Aqaba in front of Jazz Camp rooms and huts',
+    ar: 'شروق الشمس الساحر فوق خليج العقبة من أمام غرف وأكواخ نويبع كامب',
+    en: 'Enchanting sunrise over the Gulf of Aqaba in front of Nuweiba Camp rooms and huts',
   },
   'شروق الشمس الساحر فوق خليج العقبة من أمام غرف وأكواخ دروب كامب': {
-    ar: 'شروق الشمس الساحر فوق خليج العقبة من أمام غرف وأكواخ جاز كامب',
-    en: 'Enchanting sunrise over the Gulf of Aqaba in front of Jazz Camp rooms and huts',
+    ar: 'شروق الشمس الساحر فوق خليج العقبة من أمام غرف وأكواخ نويبع كامب',
+    en: 'Enchanting sunrise over the Gulf of Aqaba in front of Nuweiba Camp rooms and huts',
   },
   'جلسات بدوية أصيلة على شاطئ رأس شيطان حيث الهدوء المطلق والسكينة': {
     ar: 'جلسات بدوية أصيلة على شاطئ رأس شيطان حيث الهدوء المطلق والسكينة',
@@ -454,7 +458,7 @@ export function translateGalleryCaption(caption: string | undefined | null, lang
     return GALLERY_TRANSLATIONS[trimmed][lang];
   }
   if (lang === 'en') {
-    if (trimmed.includes('شروق')) return 'Enchanting sunrise over the Gulf of Aqaba in front of Jazz Camp';
+    if (trimmed.includes('شروق')) return 'Enchanting sunrise over the Gulf of Aqaba in front of Nuweiba Camp';
     if (trimmed.includes('بدوية') || trimmed.includes('شاطئ')) return 'Authentic seaside gatherings in Ras Shitan amidst pure serenity';
     if (trimmed.includes('أكواخ') || trimmed.includes('خامات')) return 'Sinai beach huts crafted from natural regional wood and palm';
     if (trimmed.includes('البحر') || trimmed.includes('جبال')) return 'Where crystalline Red Sea waters meet majestic Sinai mountains';
