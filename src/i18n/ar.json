@@ -248,7 +248,7 @@
     "legendPartial": "حجز جزئي (متبقي غرف)",
     "legendAvailable": "متاح بالكامل",
     "nightsBreakdown": "{nights} ليالي × {price} ج.م / ليلة",
-    "packageBreakdown": "باقة متكاملة ({guests} أفراد)",
+    "packageBreakdown": "الباقة المختارة",
     "pickDatesToCalc": "حدد التواريخ لحساب الإجمالي",
     "includesMeals": "شامل الإفطار والعشاء يومياً",
     "guestInfoTitle": "بيانات النزيل ومعلومات التواصل",

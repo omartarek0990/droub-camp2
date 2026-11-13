@@ -248,7 +248,7 @@
     "legendPartial": "Partially Booked",
     "legendAvailable": "Fully Available",
     "nightsBreakdown": "{nights} nights × {price} EGP / night",
-    "packageBreakdown": "Package for ({guests} guests)",
+    "packageBreakdown": "Selected Package",
     "pickDatesToCalc": "Select dates to calculate total",
     "includesMeals": "Includes Daily Breakfast & Dinner",
     "guestInfoTitle": "Guest Contact Information",

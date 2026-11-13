@@ -8,7 +8,6 @@ import {
   X,
   CheckCircle,
   AlertCircle,
-  Users,
   ChevronLeft,
   ChevronRight,
   Bed,
@@ -62,7 +61,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   // Guest details
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
-  const [guestsCount, setGuestsCount] = useState<number>(2);
   const [notes, setNotes] = useState('');
 
   // Confirmed bookings fetched for this reference to block dates
@@ -164,9 +162,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     // Package price
     if (!selectedPackage) return 0;
     const numericMatch = String(selectedPackage.price).match(/[\d,.]+/);
-    const basePrice = numericMatch ? Number(numericMatch[0].replace(/,/g, '')) : 0;
-    return basePrice * (guestsCount || 1);
-  }, [requestType, nightsCount, roomPricePerNight, selectedPackage, guestsCount]);
+    return numericMatch ? Number(numericMatch[0].replace(/,/g, '')) : 0;
+  }, [requestType, nightsCount, roomPricePerNight, selectedPackage]);
 
   // Check if a specific date string (YYYY-MM-DD) is in the past
   const isPastDate = (dateStr: string) => {
@@ -332,6 +329,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setSubmitting(true);
 
     try {
+      const occupancyToGuests: Record<OccupancyType, number> = {
+        single: 1,
+        double: 2,
+        triple: 3,
+        quadruple: 4,
+      };
+
       const payload: BookingRequest = {
         request_type: requestType,
         reference_name: referenceName,
@@ -340,7 +344,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         check_out: checkOut,
         guest_name: guestName.trim(),
         guest_phone: guestPhone.trim(),
-        guests_count: Number(guestsCount) || 1,
+        guests_count: requestType === 'room' ? occupancyToGuests[occupancy] || 2 : 1,
         total_price: calculatedTotalPrice || null,
         status: 'pending',
         notes: notes.trim() || null,
@@ -791,7 +795,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       ? tm.nightsBreakdown
                           .replace('{nights}', String(nightsCount))
                           .replace('{price}', String(roomPricePerNight))
-                      : tm.packageBreakdown.replace('{guests}', String(guestsCount))}
+                      : tm.packageBreakdown}
                   </span>
                   <div className="font-['Cairo'] font-black text-2xl text-white">
                     {calculatedTotalPrice > 0
@@ -846,33 +850,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                      {tm.guestsCount}
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={12}
-                      value={guestsCount}
-                      onChange={(e) => setGuestsCount(Math.max(1, Number(e.target.value)))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#0F223D]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
-                      {tm.specialRequests}
-                    </label>
-                    <input
-                      type="text"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder={tm.specialRequestsPlaceholder}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm font-['Tajawal'] focus:outline-none focus:ring-2 focus:ring-[#0F223D]"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-xs font-['Cairo'] font-bold text-[#0F223D] mb-1">
+                    {tm.specialRequests}
+                  </label>
+                  <input
+                    type="text"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder={tm.specialRequestsPlaceholder}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm font-['Tajawal'] focus:outline-none focus:ring-2 focus:ring-[#0F223D]"
+                  />
                 </div>
               </div>
 
