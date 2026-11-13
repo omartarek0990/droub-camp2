@@ -23,13 +23,16 @@ import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 import { OwnerDashboard } from './components/OwnerDashboard';
 import { BookingModal } from './components/BookingModal';
 
+const isOwnerRoute = () => {
+  const normalizedPath = window.location.pathname.replace(/\/+$/, '');
+  return window.location.hash === '#owner' || normalizedPath === '/owner';
+};
+
 function AppContent() {
   const { lang, setLang, toggleLang } = useLanguage();
 
-  // Owner View Hash detection (#owner)
-  const [isOwnerView, setIsOwnerView] = useState<boolean>(() => {
-    return window.location.hash === '#owner';
-  });
+  // Owner View detection (#owner or /owner)
+  const [isOwnerView, setIsOwnerView] = useState<boolean>(isOwnerRoute);
 
   // Dynamic Data from Supabase
   const [rooms, setRooms] = useState<RoomPricing[]>(DEFAULT_ROOM_PRICING);
@@ -61,13 +64,17 @@ function AppContent() {
     occupancy: 'double',
   });
 
-  // Listen for hash changes to detect manual navigation to #owner
+  // Listen for hash and pathname changes to detect navigation to #owner or /owner
   useEffect(() => {
-    const handleHashChange = () => {
-      setIsOwnerView(window.location.hash === '#owner');
+    const handleLocationChange = () => {
+      setIsOwnerView(isOwnerRoute());
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    window.addEventListener('popstate', handleLocationChange);
+    return () => {
+      window.removeEventListener('hashchange', handleLocationChange);
+      window.removeEventListener('popstate', handleLocationChange);
+    };
   }, []);
 
   // Fetch all live data dynamically from Supabase in parallel
@@ -125,7 +132,11 @@ function AppContent() {
 
   // Close Owner Dashboard and return to public website
   const handleCloseOwner = () => {
-    window.location.hash = '';
+    if (window.location.pathname.replace(/\/+$/, '') === '/owner') {
+      window.history.replaceState(null, '', '/');
+    } else if (window.location.hash) {
+      window.location.hash = '';
+    }
     setIsOwnerView(false);
   };
 
