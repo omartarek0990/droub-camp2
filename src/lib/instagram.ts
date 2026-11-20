@@ -1,6 +1,6 @@
 import { Language, OccupancyType } from '../types';
 
-export const BOOKING_INSTAGRAM_URL = 'https://www.instagram.com/everyday.travelc/';
+export const BOOKING_INSTAGRAM_URL = 'https://ig.me/m/everyday.travelc';
 export const BOOKING_INSTAGRAM_HANDLE = '@everyday.travelc';
 
 export async function copyMessageToClipboard(text: string): Promise<boolean> {
