@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { RoomPricing, PackageItem, OccupancyType, Language, BookingRequest } from '../types';
-import { WHATSAPP_PHONE_INTERNATIONAL } from '../lib/whatsapp';
+import {
+  BOOKING_INSTAGRAM_URL,
+  BOOKING_INSTAGRAM_HANDLE,
+  buildBookingModalMessage,
+  copyMessageToClipboard,
+} from '../lib/instagram';
 import { translations, translateRoomType, translatePackage } from '../lib/translations';
 import {
   Calendar as CalendarIcon,
@@ -17,7 +22,9 @@ import {
   User,
   FileText,
   CreditCard,
-  MessageCircle,
+  Instagram,
+  Copy,
+  Check,
   Sparkles,
 } from 'lucide-react';
 
@@ -72,6 +79,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [lastSubmittedBooking, setLastSubmittedBooking] = useState<BookingRequest | null>(null);
+  const [copiedMessage, setCopiedMessage] = useState(false);
 
   // Sync initial props whenever modal opens or props change
   useEffect(() => {
@@ -88,6 +96,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       setOccupancy(initialOccupancy);
       setIsSuccess(false);
       setSubmitError(null);
+      setCopiedMessage(false);
     }
   }, [isOpen, initialType, initialReference, initialOccupancy, rooms, packages]);
 
@@ -350,12 +359,29 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         notes: notes.trim() || null,
       };
 
-      const { error } = await supabase.from('booking_requests').insert([payload]).select();
-
-      if (error) {
-        console.error('Supabase booking error:', error);
-        throw error;
+      try {
+        const { error } = await supabase.from('booking_requests').insert([payload]).select();
+        if (error) {
+          console.warn('Supabase booking insert warning:', error);
+        }
+      } catch (dbErr) {
+        console.warn('Proceeding with Instagram booking message without DB persistence:', dbErr);
       }
+
+      const autoMsg = buildBookingModalMessage({
+        lang,
+        requestType: payload.request_type,
+        referenceName: getTranslatedReference(payload.request_type, payload.reference_name),
+        occupancy: payload.occupancy,
+        checkIn: payload.check_in,
+        checkOut: payload.check_out,
+        totalPrice: payload.total_price,
+        guestName: payload.guest_name,
+        guestPhone: payload.guest_phone,
+        notes: payload.notes,
+      });
+      const copied = await copyMessageToClipboard(autoMsg);
+      setCopiedMessage(copied);
 
       setLastSubmittedBooking(payload);
       setIsSuccess(true);
@@ -363,8 +389,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       console.error('Booking submission failed:', err);
       setSubmitError(
         lang === 'ar'
-          ? `حدث خطأ أثناء إرسال طلب الحجز: ${err.message || 'يرجى المحاولة مجدداً'}`
-          : `Failed to submit booking request: ${err.message || 'Please try again'}`
+          ? `حدث خطأ أثناء تجهيز طلب الحجز: ${err.message || 'يرجى المحاولة مجدداً'}`
+          : `Failed to prepare booking request: ${err.message || 'Please try again'}`
       );
     } finally {
       setSubmitting(false);
@@ -388,9 +414,31 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     return pkg ? translatePackage(pkg, lang).title : ref;
   };
 
-  const whatsappMessageText = lang === 'ar'
-    ? `مرحباً نويبع كامب، قمت بتقديم طلب حجز عبر الموقع:\n- الإقامة: ${lastSubmittedBooking?.reference_name}\n- الوصول: ${lastSubmittedBooking?.check_in}\n- المغادرة: ${lastSubmittedBooking?.check_out}\n- الاسم: ${lastSubmittedBooking?.guest_name}\n- الهاتف: ${lastSubmittedBooking?.guest_phone}\nأرجو المتابعة والتأكيد.`
-    : `Hello Nuweiba Camp, I submitted a booking request through the website:\n- Selection: ${lastSubmittedBooking?.reference_name}\n- Check-in: ${lastSubmittedBooking?.check_in}\n- Check-out: ${lastSubmittedBooking?.check_out}\n- Name: ${lastSubmittedBooking?.guest_name}\n- Phone: ${lastSubmittedBooking?.guest_phone}\nPlease confirm.`;
+  const instagramMessageText = lastSubmittedBooking
+    ? buildBookingModalMessage({
+        lang,
+        requestType: lastSubmittedBooking.request_type,
+        referenceName: getTranslatedReference(
+          lastSubmittedBooking.request_type,
+          lastSubmittedBooking.reference_name
+        ),
+        occupancy: lastSubmittedBooking.occupancy,
+        checkIn: lastSubmittedBooking.check_in,
+        checkOut: lastSubmittedBooking.check_out,
+        totalPrice: lastSubmittedBooking.total_price,
+        guestName: lastSubmittedBooking.guest_name,
+        guestPhone: lastSubmittedBooking.guest_phone,
+        notes: lastSubmittedBooking.notes,
+      })
+    : '';
+
+  const handleCopyBookingMessage = async () => {
+    if (!instagramMessageText) return;
+    const ok = await copyMessageToClipboard(instagramMessageText);
+    if (ok) {
+      setCopiedMessage(true);
+    }
+  };
 
   return (
     <div
@@ -486,15 +534,55 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
               </div>
 
+              {/* Auto-Generated Booking Message Preview + Copy */}
+              {instagramMessageText && (
+                <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0] max-w-md mx-auto text-start space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-['Cairo'] font-bold text-xs text-[#0F223D]">
+                      {lang === 'ar' ? 'رسالة الحجز الجاهزة لإنستجرام:' : 'Prepared Instagram Booking Message:'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyBookingMessage}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-['Cairo'] font-bold transition-colors ${
+                        copiedMessage
+                          ? 'bg-[#ECFDF5] text-[#15803D] border border-[#A7F3D0]'
+                          : 'bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#0F223D]'
+                      }`}
+                    >
+                      {copiedMessage ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>
+                        {copiedMessage
+                          ? lang === 'ar'
+                            ? 'تم النسخ تلقائياً'
+                            : 'Copied!'
+                          : lang === 'ar'
+                          ? 'نسخ الرسالة'
+                          : 'Copy'}
+                      </span>
+                    </button>
+                  </div>
+                  <pre className="font-['Tajawal'] text-xs text-[#334155] whitespace-pre-wrap bg-[#FAF8F5] p-3 rounded-xl border border-[#F1F5F9] leading-relaxed">
+                    {instagramMessageText}
+                  </pre>
+                  <p className="font-['Tajawal'] text-[11px] text-[#64748B]">
+                    {lang === 'ar'
+                      ? `تم نسخ الرسالة تلقائياً — اضغط الزر بالأسفل لفتح حساب إنستجرام (${BOOKING_INSTAGRAM_HANDLE}) ثم الصق الرسالة وأرسلها.`
+                      : `Message copied automatically — click below to open Instagram (${BOOKING_INSTAGRAM_HANDLE}), then paste and send.`}
+                  </p>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
                 <a
-                  href={`https://wa.me/${WHATSAPP_PHONE_INTERNATIONAL}?text=${encodeURIComponent(whatsappMessageText)}`}
+                  href={BOOKING_INSTAGRAM_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-['Cairo'] font-bold text-sm shadow-md transition-all active:scale-95"
+                  onClick={handleCopyBookingMessage}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#833AB4] via-[#E1306C] to-[#F77737] hover:opacity-95 text-white font-['Cairo'] font-bold text-sm shadow-md transition-all active:scale-95"
                 >
-                  <MessageCircle className="w-4 h-4" />
+                  <Instagram className="w-4 h-4" />
                   <span>{tm.followUpWhatsApp}</span>
                 </a>
 

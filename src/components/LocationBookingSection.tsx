@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Language } from '../types';
 import { translations } from '../lib/translations';
 import { WHATSAPP_PHONE_DISPLAY } from '../lib/whatsapp';
 import {
+  BOOKING_INSTAGRAM_URL,
+  BOOKING_INSTAGRAM_HANDLE,
+  buildGeneralStayInquiryMessage,
+  copyMessageToClipboard,
+} from '../lib/instagram';
+import {
   MapPin,
   Phone,
-  MessageCircle,
   Instagram,
   Facebook,
   CreditCard,
@@ -13,7 +18,7 @@ import {
   ExternalLink,
   ShieldCheck,
   CheckCircle2,
-  Clock,
+  Check,
 } from 'lucide-react';
 
 interface LocationBookingSectionProps {
@@ -40,6 +45,15 @@ export const LocationBookingSection: React.FC<LocationBookingSectionProps> = ({
   onOpenBooking,
 }) => {
   const t = translations[lang];
+  const [copiedInquiry, setCopiedInquiry] = useState(false);
+
+  const handleInstagramInquiryClick = async () => {
+    const ok = await copyMessageToClipboard(buildGeneralStayInquiryMessage(lang));
+    if (ok) {
+      setCopiedInquiry(true);
+      setTimeout(() => setCopiedInquiry(false), 4000);
+    }
+  };
 
   return (
     <section id="location" className="py-14 sm:py-20 bg-[#FAF8F5] border-t border-[#E8E2D8]">
@@ -83,22 +97,27 @@ export const LocationBookingSection: React.FC<LocationBookingSectionProps> = ({
 
                 {/* Direct Contact Buttons */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                  {/* General WhatsApp Inquiries */}
+                  {/* General Instagram Booking Inquiries */}
                   <a
-                    href={`https://wa.me/201061189414`}
+                    href={BOOKING_INSTAGRAM_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E2E8F0] hover:border-[#25D366] hover:bg-[#F0FDF4] transition-all flex items-center gap-3 group"
+                    onClick={handleInstagramInquiryClick}
+                    className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E2E8F0] hover:border-[#E1306C] hover:bg-[#FDF2F8] transition-all flex items-center gap-3 group"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-[#25D366]/10 text-[#25D366] flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <MessageCircle className="w-5 h-5 fill-[#25D366]/20" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#F58529]/15 via-[#E1306C]/15 to-[#833AB4]/15 text-[#E1306C] flex items-center justify-center group-hover:scale-110 transition-transform">
+                      {copiedInquiry ? <Check className="w-5 h-5 text-[#16a34a]" /> : <Instagram className="w-5 h-5" />}
                     </div>
                     <div>
                       <span className="text-[11px] font-['Cairo'] text-[#64748B] block">
-                        {t.common.generalInquiries}
+                        {copiedInquiry
+                          ? lang === 'ar'
+                            ? 'تم النسخ! الصق في إنستجرام'
+                            : 'Copied! Paste in Instagram'
+                          : t.common.generalInquiries}
                       </span>
                       <span className="font-['Cairo'] font-bold text-xs sm:text-sm text-[#0F223D] dir-ltr inline-block">
-                        {whatsapp}
+                        {BOOKING_INSTAGRAM_HANDLE}
                       </span>
                     </div>
                   </a>

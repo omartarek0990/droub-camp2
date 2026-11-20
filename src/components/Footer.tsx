@@ -3,7 +3,8 @@ import { Logo } from './Logo';
 import { Language } from '../types';
 import { translations } from '../lib/translations';
 import { WHATSAPP_PHONE_DISPLAY } from '../lib/whatsapp';
-import { MapPin, Phone, MessageCircle, Instagram, Facebook, Heart } from 'lucide-react';
+import { BOOKING_INSTAGRAM_URL, BOOKING_INSTAGRAM_HANDLE } from '../lib/instagram';
+import { MapPin, Phone, Instagram, Facebook, Heart } from 'lucide-react';
 
 interface FooterProps {
   lang: Language;
@@ -101,16 +102,6 @@ export const Footer: React.FC<FooterProps> = ({
                 </a>
               )}
 
-              {/* WhatsApp: direct communication */}
-              <a
-                href={`https://wa.me/201061189414`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-[#25D366] flex items-center justify-center text-white transition-colors"
-                aria-label="WhatsApp"
-              >
-                <MessageCircle className="w-4 h-4" />
-              </a>
             </div>
           </div>
 
@@ -197,14 +188,14 @@ export const Footer: React.FC<FooterProps> = ({
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
-                <MessageCircle className="w-4 h-4 text-[#25D366] flex-shrink-0" />
+                <Instagram className="w-4 h-4 text-[#E1306C] flex-shrink-0" />
                 <a
-                  href={`https://wa.me/201061189414`}
+                  href={BOOKING_INSTAGRAM_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors dir-ltr"
                 >
-                  01061189414 ({lang === 'ar' ? 'واتساب' : 'WhatsApp'})
+                  {BOOKING_INSTAGRAM_HANDLE} ({lang === 'ar' ? 'الحجز عبر إنستجرام' : 'Instagram Booking'})
                 </a>
               </div>
             </div>

@@ -1,7 +1,12 @@
-import React from 'react';
-import { Utensils, Coffee, Waves, Eye, Gamepad2, Wifi, Bus, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Utensils, Coffee, Waves, Eye, Gamepad2, Wifi, Bus, CheckCircle2, Instagram, Check } from 'lucide-react';
 import { Language } from '../types';
 import { translations } from '../lib/translations';
+import {
+  BOOKING_INSTAGRAM_URL,
+  buildTransferInquiryMessage,
+  copyMessageToClipboard,
+} from '../lib/instagram';
 
 interface AmenitiesSectionProps {
   lang: Language;
@@ -9,6 +14,7 @@ interface AmenitiesSectionProps {
 
 export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ lang }) => {
   const t = translations[lang];
+  const [copiedTransfer, setCopiedTransfer] = useState(false);
 
   const amenities = [
     {
@@ -62,11 +68,14 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ lang }) => {
     },
   ];
 
-  const transferMsg = encodeURIComponent(
-    lang === 'ar'
-      ? 'مرحباً، أود الاستفسار عن مواعيد وأسعار انتقالات نويبع كامب'
-      : 'Hello, I would like to inquire about Nuweiba Camp transfer schedules and prices'
-  );
+  const handleTransferClick = async () => {
+    const msg = buildTransferInquiryMessage(lang);
+    const ok = await copyMessageToClipboard(msg);
+    if (ok) {
+      setCopiedTransfer(true);
+      setTimeout(() => setCopiedTransfer(false), 4000);
+    }
+  };
 
   return (
     <section id="amenities" className="py-14 sm:py-20 bg-[#F4EFEA] border-t border-[#E8E2D8]">
@@ -145,12 +154,23 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ lang }) => {
             </div>
           </div>
           <a
-            href={`https://wa.me/201061189414?text=${transferMsg}`}
+            href={BOOKING_INSTAGRAM_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full md:w-auto text-center px-6 py-3.5 rounded-xl bg-[#0F223D] hover:bg-[#1E3A5F] active:scale-95 text-white font-['Cairo'] font-bold text-xs sm:text-sm transition-all whitespace-nowrap shadow-sm"
+            onClick={handleTransferClick}
+            className="w-full md:w-auto inline-flex items-center justify-center gap-2 text-center px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#833AB4] via-[#E1306C] to-[#F77737] hover:opacity-95 active:scale-95 text-white font-['Cairo'] font-bold text-xs sm:text-sm transition-all whitespace-nowrap shadow-sm"
           >
-            {t.amenities.transferCTA}
+            {copiedTransfer ? (
+              <>
+                <Check className="w-4 h-4" />
+                <span>{lang === 'ar' ? 'تم نسخ الرسالة! الصقها في إنستجرام' : 'Copied! Paste in Instagram'}</span>
+              </>
+            ) : (
+              <>
+                <Instagram className="w-4 h-4" />
+                <span>{t.amenities.transferCTA}</span>
+              </>
+            )}
           </a>
         </div>
       </div>

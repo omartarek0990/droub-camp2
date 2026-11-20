@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TripItem, Language, ItemPhoto } from '../types';
 import { translations, translateTrip } from '../lib/translations';
-import { buildTripInquiryMessage, openWhatsApp } from '../lib/whatsapp';
+import {
+  BOOKING_INSTAGRAM_URL,
+  buildTripInquiryMessage,
+  copyMessageToClipboard,
+} from '../lib/instagram';
 import { PhotoCarousel } from './PhotoCarousel';
-import { MessageCircle, Info, Mountain } from 'lucide-react';
+import { Instagram, Info, Mountain, Check } from 'lucide-react';
 
 interface TripsSectionProps {
   trips: TripItem[];
@@ -19,12 +23,17 @@ export const TripsSection: React.FC<TripsSectionProps> = ({
   itemPhotos = [],
 }) => {
   const t = translations[lang];
+  const [copiedTripIdx, setCopiedTripIdx] = useState<number | null>(null);
 
   const activeTrips = trips.filter((t) => t.is_active !== false);
 
-  const handleAskAboutTrip = (translatedTitle: string) => {
+  const handleAskAboutTrip = async (idx: number, translatedTitle: string) => {
     const msg = buildTripInquiryMessage(translatedTitle, lang);
-    openWhatsApp(msg);
+    const ok = await copyMessageToClipboard(msg);
+    if (ok) {
+      setCopiedTripIdx(idx);
+      setTimeout(() => setCopiedTripIdx((prev) => (prev === idx ? null : prev)), 4000);
+    }
   };
 
   return (
@@ -114,13 +123,25 @@ export const TripsSection: React.FC<TripsSectionProps> = ({
                     <div className="text-[11px] text-[#64748B] font-['Cairo']">
                       <span>{t.trips.quoteNotice}</span>
                     </div>
-                    <button
-                      onClick={() => handleAskAboutTrip(translated.title)}
-                      className="inline-flex items-center justify-center gap-2 bg-[#0F223D] hover:bg-[#1E3A5F] active:scale-95 text-white font-['Cairo'] font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-sm transition-all"
+                    <a
+                      href={BOOKING_INSTAGRAM_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handleAskAboutTrip(index, translated.title)}
+                      className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#833AB4] via-[#E1306C] to-[#F77737] hover:opacity-95 active:scale-95 text-white font-['Cairo'] font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-sm transition-all"
                     >
-                      <MessageCircle className="w-4 h-4 fill-white/20" />
-                      <span>{t.trips.askAboutTrip}</span>
-                    </button>
+                      {copiedTripIdx === index ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>{lang === 'ar' ? 'تم النسخ! الصق في إنستجرام' : 'Copied! Paste in IG'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Instagram className="w-4 h-4" />
+                          <span>{t.trips.askAboutTrip}</span>
+                        </>
+                      )}
+                    </a>
                   </div>
                 </div>
               </div>
